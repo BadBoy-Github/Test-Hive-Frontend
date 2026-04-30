@@ -1,0 +1,124 @@
+import { useContext, useEffect, useState } from 'react';
+import { AuthContext } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import API from '../utils/api';
+import { FaPlus, FaList, FaChartBar } from 'react-icons/fa';
+
+const Dashboard = () => {
+  const { user, logout, getSessionTimeRemaining, loading } = useContext(AuthContext);
+  const navigate = useNavigate();
+  const [tests, setTests] = useState([]);
+  const [userAttempts, setUserAttempts] = useState({});
+  const [sessionTime, setSessionTime] = useState(null);
+
+  const fetchTests = async () => {
+    try {
+      const [testsRes, attemptsRes] = await Promise.all([
+        API.get('/tests'),
+        API.get('/attempts/results')
+      ]);
+
+      setTests(testsRes.data);
+
+      // Create a map of testId -> attempt count
+      const attemptsMap = {};
+      attemptsRes.data.forEach(result => {
+        const testId = result.testId._id;
+        if (!attemptsMap[testId]) {
+          attemptsMap[testId] = 0;
+        }
+        attemptsMap[testId]++;
+      });
+      setUserAttempts(attemptsMap);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    if (!loading && !user) navigate('/login');
+    if (!loading && user) fetchTests();
+
+    // Update session time every second
+    const updateSessionTime = () => {
+      const remaining = getSessionTimeRemaining();
+      setSessionTime(remaining);
+    };
+
+    updateSessionTime();
+    const interval = setInterval(updateSessionTime, 1000);
+
+    return () => clearInterval(interval);
+  }, [user, loading, navigate, getSessionTimeRemaining]);
+
+  if (loading) return <div>Loading...</div>;
+  if (!user) return null; // Will redirect to login
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <header className="bg-white shadow">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-6">
+            <h1 className="text-3xl font-bold text-gray-900">ExamPro Dashboard</h1>
+            <div className="flex items-center space-x-4">
+              <span className="text-gray-700">Welcome, {user.name}</span>
+              {sessionTime && (
+                <span className="text-sm text-gray-500">
+                  Session expires in: {sessionTime.hours}:{sessionTime.minutes.toString().padStart(2, '0')}:{sessionTime.seconds.toString().padStart(2, '0')}
+                </span>
+              )}
+              <button onClick={logout} className="text-indigo-600 hover:text-indigo-900">Logout</button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        {user.role === 'admin' ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-white p-6 rounded-lg shadow">
+              <FaPlus className="text-3xl text-indigo-600 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900">Create Test</h3>
+              <p className="text-gray-500">Add new tests and questions</p>
+              <button onClick={() => navigate('/admin/create-test')} className="mt-4 bg-indigo-600 text-white px-4 py-2 rounded">Create</button>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow">
+              <FaList className="text-3xl text-green-600 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900">Manage Tests</h3>
+              <p className="text-gray-500">Edit and view existing tests</p>
+              <button onClick={() => navigate('/admin/tests')} className="mt-4 bg-green-600 text-white px-4 py-2 rounded">Manage</button>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow">
+              <FaChartBar className="text-3xl text-blue-600 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900">Analytics</h3>
+              <p className="text-gray-500">View test results and statistics</p>
+              <button onClick={() => navigate('/admin/analytics')} className="mt-4 bg-blue-600 text-white px-4 py-2 rounded">View</button>
+            </div>
+          </div>
+        ) : (
+          <div>
+            <div className="mb-6">
+              <button onClick={() => navigate('/results')} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                View My Results
+              </button>
+            </div>
+
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Available Tests</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {tests.map(test => (
+                <div key={test._id} className="bg-white p-6 rounded-lg shadow">
+                  <h3 className="text-xl font-semibold text-gray-900">{test.title}</h3>
+                  <p className="text-gray-600 mt-2">{test.description}</p>
+                  <p className="text-sm text-gray-500 mt-2">Duration: {test.duration} minutes</p>
+                  <button onClick={() => navigate(`/test/${test._id}`)} className="mt-4 bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">Start Test</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
+  );
+};
+
+export default Dashboard;
