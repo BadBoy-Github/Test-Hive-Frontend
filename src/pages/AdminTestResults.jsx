@@ -33,31 +33,8 @@ const AdminTestResults = () => {
 
   const fetchStudentsForTest = async (testId) => {
     try {
-      const res = await API.get(`/admin/tests/${testId}/attempts`);
-      // Process attempts to group by student
-      const studentMap = {};
-      res.data.forEach(attempt => {
-        const userId = attempt.user._id;
-        if (!studentMap[userId]) {
-          studentMap[userId] = {
-            _id: userId,
-            name: attempt.user.name,
-            email: attempt.user.email,
-            attempts: []
-          };
-        }
-        studentMap[userId].attempts.push({
-          _id: attempt._id,
-          number: studentMap[userId].attempts.length + 1,
-          score: attempt.score
-        });
-      });
-      // Calculate latest score for each student
-      const studentsArray = Object.values(studentMap).map(student => ({
-        ...student,
-        latestScore: Math.max(...student.attempts.map(a => a.score))
-      }));
-      setStudents(studentsArray);
+      const res = await API.get(`/admin/test-results/${testId}`);
+      setStudents(res.data);
     } catch (err) {
       console.error(err);
     }
@@ -75,7 +52,7 @@ const AdminTestResults = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <h1 className="text-3xl font-bold text-gray-900">Test Results</h1>
-            <button onClick={() => navigate('/admin/create-test')} className="bg-indigo-600 text-white px-4 py-2 rounded">Back to Dashboard</button>
+            <button onClick={() => navigate('/dashboard')} className="bg-indigo-600 text-white px-4 py-2 rounded">Back to Dashboard</button>
           </div>
         </div>
       </header>
@@ -104,13 +81,26 @@ const AdminTestResults = () => {
                   <div key={student._id} className="bg-white p-4 rounded-lg shadow">
                     <h3 className="text-lg font-semibold">{student.name} ({student.email})</h3>
                     <p>Latest Score: {student.latestScore}</p>
-                    <div className="mt-2 space-y-2">
-                      {student.attempts.map(attempt => (
-                        <div key={attempt._id} className="bg-gray-100 p-2 rounded cursor-pointer" onClick={() => navigate(`/admin/attempt/${attempt._id}`)}>
-                          Attempt {attempt.number}: Score {attempt.score}
-                        </div>
-                      ))}
-                    </div>
+                     <div className="mt-2 space-y-2">
+                       {student.attempts.map(attempt => (
+                         <div key={attempt._id} className="bg-gray-100 p-4 rounded cursor-pointer hover:bg-gray-200" onClick={() => navigate(`/admin/attempt/${attempt._id}`)}>
+                           <div className="flex justify-between items-start mb-2">
+                             <div>
+                               <h4 className="font-semibold">Attempt #{attempt.number}</h4>
+                               <p className="text-sm text-gray-600">
+                                 Completed on: {new Date(attempt.endTime).toLocaleDateString()} at {new Date(attempt.endTime).toLocaleTimeString()}
+                               </p>
+                             </div>
+                             <div className="text-right">
+                               <p className="text-lg font-bold text-indigo-600">{attempt.score} points</p>
+                               <p className="text-sm text-gray-500">
+                                 Time taken: {attempt.totalTime ? `${Math.floor(attempt.totalTime)}:${Math.round((attempt.totalTime % 1) * 60).toString().padStart(2, '0')}` : 'N/A'}
+                               </p>
+                             </div>
+                           </div>
+                         </div>
+                       ))}
+                     </div>
                   </div>
                 ))}
             </div>

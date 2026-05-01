@@ -1,5 +1,6 @@
 import { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { FaClipboardList, FaPoll, FaUsers } from 'react-icons/fa';
 import API from '../utils/api';
 import { useModal } from '../components/Modal';
 import { AuthContext } from '../context/AuthContext';
@@ -171,14 +172,17 @@ const AdminDashboard = () => {
 
         <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-blue-500 text-white p-6 rounded-lg shadow cursor-pointer hover:bg-blue-600" onClick={() => navigate('/admin/tests')}>
+            <FaClipboardList className="text-3xl mb-2" />
             <h3 className="text-xl font-semibold">Manage Tests</h3>
             <p>Create, edit, and manage your tests.</p>
           </div>
           <div className="bg-purple-500 text-white p-6 rounded-lg shadow cursor-pointer hover:bg-purple-600" onClick={() => navigate('/admin/test-results')}>
+            <FaPoll className="text-3xl mb-2" />
             <h3 className="text-xl font-semibold">Test Results</h3>
             <p>View and analyze test results.</p>
           </div>
           <div className="bg-green-500 text-white p-6 rounded-lg shadow cursor-pointer hover:bg-green-600" onClick={() => navigate('/admin/analytics')}>
+            <FaUsers className="text-3xl mb-2" />
             <h3 className="text-xl font-semibold">Analytics</h3>
             <p>View detailed analytics and reports.</p>
           </div>

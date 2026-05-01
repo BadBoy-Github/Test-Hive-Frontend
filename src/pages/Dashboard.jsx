@@ -2,7 +2,7 @@ import { useContext, useEffect, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import API from '../utils/api';
-import { FaPlus, FaList, FaChartBar, FaUsers } from 'react-icons/fa';
+import { FaPlus, FaList, FaChartBar, FaUsers, FaPoll } from 'react-icons/fa';
 import Loader from '../components/Loader';
 
 const Dashboard = () => {
@@ -125,7 +125,7 @@ const Dashboard = () => {
               </button>
             </div>
             <div className="bg-white p-6 rounded-lg shadow">
-              <FaChartBar className="text-3xl text-blue-600 mb-4" />
+              <FaPoll className="text-3xl text-blue-600 mb-4" />
               <h3 className="text-lg font-medium text-gray-900">
                 Test Results
               </h3>

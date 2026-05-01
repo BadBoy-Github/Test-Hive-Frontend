@@ -83,7 +83,7 @@ const TestResultDetail = () => {
                 <div className="text-right">
                   <p className="text-2xl font-bold text-indigo-600">{result.score} points</p>
                   <p className="text-sm text-gray-500">
-                    Time taken: {result.totalTime ? `${Math.floor(result.totalTime / 60)}:${(result.totalTime % 60).toString().padStart(2, '0')}` : 'N/A'}
+                    Time taken: {result.totalTime ? `${Math.floor(result.totalTime)}:${Math.round((result.totalTime % 1) * 60).toString().padStart(2, '0')}` : 'N/A'}
                   </p>
                 </div>
               </div>
