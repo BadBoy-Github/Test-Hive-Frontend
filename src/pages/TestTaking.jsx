@@ -15,6 +15,7 @@ const TestTaking = () => {
   const [timeLeft, setTimeLeft] = useState(0);
   const [attemptId, setAttemptId] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [tabSwitches, setTabSwitches] = useState(0);
 
   const fetchTest = async () => {
     try {
@@ -66,6 +67,15 @@ const TestTaking = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const submitAnswer = async (questionId) => {
+    const answer = answers[questionId];
+    await API.post(`/attempts/${attemptId}/answer`, {
+      questionId,
+      userAnswer: answer,
+      timeTaken: 0 // Calculate properly
+    });
   };
 
   const submitTest = async () => {
@@ -120,6 +130,47 @@ const TestTaking = () => {
     }
   }, [timeLeft, test, attemptId]);
 
+  // Anti-cheat measures
+  const MAX_TAB_SWITCHES = 3;
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        setTabSwitches(prev => {
+          const newCount = prev + 1;
+          if (newCount > MAX_TAB_SWITCHES) {
+            submitTest();
+          }
+          return newCount;
+        });
+      }
+    };
+
+    const preventActions = (e) => {
+      e.preventDefault();
+      showModal({
+        title: 'Action Not Allowed',
+        message: 'Copy, paste, cut, or right-click is disabled during the test.',
+        onConfirm: () => {},
+        confirmText: 'OK',
+        type: 'confirm'
+      });
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener('copy', preventActions);
+    document.addEventListener('paste', preventActions);
+    document.addEventListener('cut', preventActions);
+    document.addEventListener('contextmenu', preventActions);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.removeEventListener('copy', preventActions);
+      document.removeEventListener('paste', preventActions);
+      document.removeEventListener('cut', preventActions);
+      document.removeEventListener('contextmenu', preventActions);
+    };
+  }, [attemptId, showModal, submitTest]);
+
   const handleAnswer = (questionId, answer, isCheckbox = false) => {
     if (isCheckbox) {
       const currentAnswers = answers[questionId] || [];
@@ -130,15 +181,6 @@ const TestTaking = () => {
     } else {
       setAnswers({ ...answers, [questionId]: answer });
     }
-  };
-
-  const submitAnswer = async (questionId) => {
-    const answer = answers[questionId];
-    await API.post(`/attempts/${attemptId}/answer`, {
-      questionId,
-      userAnswer: answer,
-      timeTaken: 0 // Calculate properly
-    });
   };
 
   const nextQuestion = () => {

@@ -1,4 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
+import Header from './components/Header';
+import Footer from './components/Footer';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import TestTaking from './pages/TestTaking';
@@ -11,18 +13,24 @@ import AdminAnalytics from './pages/AdminAnalytics';
 
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Login />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/dashboard" element={<Dashboard />} />
-      <Route path="/test/:testId" element={<TestTaking />} />
-      <Route path="/results" element={<TestResults />} />
-      <Route path="/results/:testId" element={<TestResultDetail />} />
-      <Route path="/admin/create-test" element={<AdminDashboard />} />
-      <Route path="/admin/tests" element={<AdminTests />} />
-      <Route path="/admin/students" element={<AdminStudents />} />
-      <Route path="/admin/analytics" element={<AdminAnalytics />} />
-    </Routes>
+    <div className="min-h-screen flex flex-col">
+      <Header />
+      <main className="flex-grow">
+        <Routes>
+          <Route path="/" element={<Login />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/test/:testId" element={<TestTaking />} />
+          <Route path="/results" element={<TestResults />} />
+          <Route path="/results/:testId" element={<TestResultDetail />} />
+          <Route path="/admin/create-test" element={<AdminDashboard />} />
+          <Route path="/admin/tests" element={<AdminTests />} />
+          <Route path="/admin/students" element={<AdminStudents />} />
+          <Route path="/admin/analytics" element={<AdminAnalytics />} />
+        </Routes>
+      </main>
+      <Footer />
+    </div>
   );
 }
 
