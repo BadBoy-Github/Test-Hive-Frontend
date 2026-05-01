@@ -15,6 +15,8 @@ const AdminStudents = () => {
   const [loading, setLoading] = useState(true);
   const [editingStudent, setEditingStudent] = useState(null);
   const [showStudentForm, setShowStudentForm] = useState(false);
+  const [isSavingStudent, setIsSavingStudent] = useState(false);
+  const [isDeletingStudent, setIsDeletingStudent] = useState(null);
   const [studentForm, setStudentForm] = useState({
     name: '',
     email: '',
@@ -68,57 +70,63 @@ const AdminStudents = () => {
     setStudentForm({ ...studentForm, [e.target.name]: e.target.value });
   };
 
-  const saveStudent = async () => {
-    try {
-      if (editingStudent) {
-        await API.put(`/admin/students/${editingStudent._id}`, studentForm);
-      } else {
-        await API.post('/admin/students', studentForm);
-      }
-      fetchStudents();
-      cancelEditing();
-      showModal({
-        title: 'Success',
-        message: editingStudent ? 'Student updated successfully!' : 'Student added successfully!',
-        type: 'confirm'
-      });
-    } catch (err) {
-      console.error(err);
-      showModal({
-        title: 'Error',
-        message: 'Failed to save student. Please try again.',
-        type: 'confirm'
-      });
-    }
-  };
+   const saveStudent = async () => {
+     setIsSavingStudent(true);
+     try {
+       if (editingStudent) {
+         await API.put(`/admin/students/${editingStudent._id}`, studentForm);
+       } else {
+         await API.post('/admin/students', studentForm);
+       }
+       fetchStudents();
+       cancelEditing();
+       showModal({
+         title: 'Success',
+         message: editingStudent ? 'Student updated successfully!' : 'Student added successfully!',
+         type: 'confirm'
+       });
+     } catch (err) {
+       console.error(err);
+       showModal({
+         title: 'Error',
+         message: 'Failed to save student. Please try again.',
+         type: 'confirm'
+       });
+     } finally {
+       setIsSavingStudent(false);
+     }
+   };
 
-  const deleteStudent = async (studentId, studentName) => {
-    showModal({
-      title: 'Delete Student',
-      message: `Are you sure you want to delete "${studentName}"? This will permanently remove their account and all associated data. This action cannot be undone.`,
-      onConfirm: async () => {
-        try {
-          await API.delete(`/admin/students/${studentId}`);
-          fetchStudents();
-          showModal({
-            title: 'Success',
-            message: 'Student deleted successfully!',
-            type: 'confirm'
-          });
-        } catch (err) {
-          console.error(err);
-          showModal({
-            title: 'Error',
-            message: 'Failed to delete student. Please try again.',
-            type: 'confirm'
-          });
-        }
-      },
-      confirmText: 'Delete',
-      cancelText: 'Cancel',
-      type: 'cancel'
-    });
-  };
+   const deleteStudent = async (studentId, studentName) => {
+     showModal({
+       title: 'Delete Student',
+       message: `Are you sure you want to delete "${studentName}"? This will permanently remove their account and all associated data. This action cannot be undone.`,
+       onConfirm: async () => {
+         try {
+           setIsDeletingStudent(studentId);
+           await API.delete(`/admin/students/${studentId}`);
+           fetchStudents();
+           showModal({
+             title: 'Success',
+             message: 'Student deleted successfully!',
+             type: 'confirm'
+           });
+         } catch (err) {
+           console.error(err);
+           showModal({
+             title: 'Error',
+             message: 'Failed to delete student. Please try again.',
+             type: 'confirm'
+           });
+         } finally {
+           setIsDeletingStudent(null);
+         }
+       },
+       confirmText: 'Delete',
+       cancelText: 'Cancel',
+       type: 'cancel'
+     });
+   };
 
   if (loading) return <Loader message="Loading students..." />;
 
@@ -174,9 +182,15 @@ const AdminStudents = () => {
                       </button>
                       <button
                         onClick={() => deleteStudent(student._id, student.name)}
-                        className="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700"
+                        disabled={isDeletingStudent === student._id}
+                        className="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center"
                       >
-                        Delete
+                        {isDeletingStudent === student._id ? (
+                          <svg className="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                        ) : 'Delete'}
                       </button>
                     </div>
                   </div>
@@ -233,10 +247,16 @@ const AdminStudents = () => {
                 <div className="flex space-x-2">
                   <button
                     onClick={saveStudent}
-                    disabled={!studentForm.name.trim() || !studentForm.email.trim() || !studentForm.phone.trim()}
-                    className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:bg-gray-400"
+                    disabled={!studentForm.name.trim() || !studentForm.email.trim() || !studentForm.phone.trim() || isSavingStudent}
+                    className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:bg-gray-400 flex items-center space-x-2"
                   >
-                    {editingStudent ? 'Update Student' : 'Add Student'}
+                    {isSavingStudent && (
+                      <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    )}
+                    <span>{isSavingStudent ? 'Saving...' : (editingStudent ? 'Update Student' : 'Add Student')}</span>
                   </button>
                   <button
                     onClick={cancelEditing}

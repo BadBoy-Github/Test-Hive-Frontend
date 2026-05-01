@@ -23,7 +23,7 @@ import { CSS } from '@dnd-kit/utilities';
 import API from '../utils/api';
 import { useModal } from '../components/Modal';
 
-const SortableQuestion = ({ question, onEdit, onDelete }) => {
+const SortableQuestion = ({ question, onEdit, onDelete, isDeleting }) => {
   const {
     attributes,
     listeners,
@@ -84,9 +84,15 @@ const SortableQuestion = ({ question, onEdit, onDelete }) => {
           </button>
           <button
             onClick={() => onDelete(question._id)}
-            className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
+            disabled={isDeleting === question._id}
+            className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center"
           >
-            Delete
+            {isDeleting === question._id ? (
+              <svg className="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            ) : 'Delete'}
           </button>
         </div>
       </div>
@@ -108,6 +114,12 @@ const AdminTests = () => {
   const [showQuestionForm, setShowQuestionForm] = useState(false);
   const [editingTest, setEditingTest] = useState(null);
   const [showTestForm, setShowTestForm] = useState(false);
+  const [isSavingQuestion, setIsSavingQuestion] = useState(false);
+  const [isDeletingQuestion, setIsDeletingQuestion] = useState(null);
+  const [isSavingTest, setIsSavingTest] = useState(false);
+  const [isDeletingTest, setIsDeletingTest] = useState(null);
+  const [togglingTestStatus, setTogglingTestStatus] = useState(null);
+  const [togglingShowResults, setTogglingShowResults] = useState(null);
   const [questionForm, setQuestionForm] = useState({
     questionText: '',
     type: 'mcq',
@@ -173,20 +185,26 @@ const AdminTests = () => {
   };
 
   const toggleTestStatus = async (testId, currentStatus) => {
+    setTogglingTestStatus(testId);
     try {
       await API.patch(`/admin/tests/${testId}`, { isActive: !currentStatus });
       fetchTests();
     } catch (err) {
       console.error(err);
+    } finally {
+      setTogglingTestStatus(null);
     }
   };
 
   const toggleShowResults = async (testId, currentStatus) => {
+    setTogglingShowResults(testId);
     try {
       await API.patch(`/admin/tests/${testId}`, { showResults: !currentStatus });
       fetchTests();
     } catch (err) {
       console.error(err);
+    } finally {
+      setTogglingShowResults(null);
     }
   };
 
@@ -206,8 +224,11 @@ const AdminTests = () => {
     if (name.startsWith('option')) {
       const index = parseInt(name.split('-')[1]);
       const updatedOptions = [...questionForm.options];
+      const oldValue = updatedOptions[index];
       updatedOptions[index] = value;
-      setQuestionForm({ ...questionForm, options: updatedOptions });
+      // Update correctAnswer if the changed option was marked as correct
+      const updatedCorrectAnswer = questionForm.correctAnswer.map(ans => ans === oldValue ? value : ans);
+      setQuestionForm({ ...questionForm, options: updatedOptions, correctAnswer: updatedCorrectAnswer });
     } else if (name === 'marks') {
       setQuestionForm({ ...questionForm, [name]: parseInt(value) || 1 });
     } else if (name === 'type') {
@@ -227,8 +248,24 @@ const AdminTests = () => {
 
   const removeOption = (index) => {
     if (questionForm.options.length > 1) {
+      const optionToRemove = questionForm.options[index];
+      const isCorrectOption = questionForm.correctAnswer.includes(optionToRemove);
+      
+      if (isCorrectOption) {
+        const otherOptions = questionForm.options.filter((_, i) => i !== index);
+        const hasOtherCorrect = questionForm.correctAnswer.some(ans => otherOptions.includes(ans));
+        if (!hasOtherCorrect) {
+          showModal({
+            title: 'Warning',
+            message: 'You are about to delete the only correct answer. Please select another correct option first.',
+            type: 'confirm'
+          });
+          return;
+        }
+      }
+      
       const updatedOptions = questionForm.options.filter((_, i) => i !== index);
-      const updatedCorrectAnswer = questionForm.correctAnswer.filter(answer => answer !== questionForm.options[index]);
+      const updatedCorrectAnswer = questionForm.correctAnswer.filter(answer => answer !== optionToRemove);
       setQuestionForm({
         ...questionForm,
         options: updatedOptions,
@@ -263,7 +300,24 @@ const AdminTests = () => {
 
 
 
+  const isQuestionValid = () => {
+    if (!questionForm.questionText.trim()) return false;
+    if (questionForm.type === 'descriptive' || questionForm.type === 'coding') {
+      return questionForm.correctAnswer[0]?.trim();
+    }
+    return questionForm.correctAnswer.length > 0;
+  };
+
   const saveQuestion = async () => {
+    if (!isQuestionValid()) {
+      showModal({
+        title: 'Validation Error',
+        message: 'Please provide a correct answer for this question type.',
+        type: 'confirm'
+      });
+      return;
+    }
+    setIsSavingQuestion(true);
     try {
       if (editingQuestion) {
         await API.put(`/tests/${selectedTest._id}/update-question/${editingQuestion._id}`, questionForm);
@@ -286,16 +340,21 @@ const AdminTests = () => {
         message: 'Failed to save question. Please try again.',
         type: 'confirm'
       });
+    } finally {
+      setIsSavingQuestion(false);
     }
   };
 
   const deleteQuestion = async (questionId) => {
     if (!confirm('Are you sure you want to delete this question?')) return;
+    setIsDeletingQuestion(questionId);
     try {
       await API.delete(`/tests/${selectedTest._id}/questions/${questionId}`);
       fetchQuestions(selectedTest._id);
     } catch (err) {
       console.error(err);
+    } finally {
+      setIsDeletingQuestion(null);
     }
   };
 
@@ -366,6 +425,7 @@ const AdminTests = () => {
   };
 
   const saveTest = async () => {
+    setIsSavingTest(true);
     try {
       await API.put(`/tests/${editingTest._id}`, testForm);
       fetchTests();
@@ -382,6 +442,8 @@ const AdminTests = () => {
         message: 'Failed to update test. Please try again.',
         type: 'confirm'
       });
+    } finally {
+      setIsSavingTest(false);
     }
   };
 
@@ -391,6 +453,7 @@ const AdminTests = () => {
       message: `Are you sure you want to delete "${testTitle}"? This will permanently delete the test and all associated questions, attempts, and answers. This action cannot be undone.`,
       onConfirm: async () => {
         try {
+          setIsDeletingTest(testId);
           await API.delete(`/tests/${testId}`);
           fetchTests();
           showModal({
@@ -405,6 +468,8 @@ const AdminTests = () => {
             message: 'Failed to delete test. Please try again.',
             type: 'confirm'
           });
+        } finally {
+          setIsDeletingTest(null);
         }
       },
       confirmText: 'Delete',
@@ -462,19 +527,33 @@ const AdminTests = () => {
                         <div className="flex space-x-2">
                           <button
                             onClick={() => toggleTestStatus(test._id, test.isActive)}
-                            className={`px-3 py-1 text-xs rounded ${
+                            disabled={togglingTestStatus === test._id}
+                            className={`px-3 py-1 text-xs rounded flex items-center ${
                               test.isActive ? 'bg-red-500 text-white' : 'bg-green-500 text-white'
-                            }`}
+                            } ${togglingTestStatus === test._id ? 'opacity-50 cursor-not-allowed' : ''}`}
                           >
-                            {test.isActive ? 'Make Dormant' : 'Make Live'}
+                            {togglingTestStatus === test._id ? (
+                              <svg className="animate-spin h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                            ) : null}
+                            {togglingTestStatus === test._id ? '...' : (test.isActive ? 'Make Dormant' : 'Make Live')}
                           </button>
                           <button
                             onClick={() => toggleShowResults(test._id, test.showResults)}
-                            className={`px-3 py-1 text-xs rounded ${
+                            disabled={togglingShowResults === test._id}
+                            className={`px-3 py-1 text-xs rounded flex items-center ${
                               test.showResults ? 'bg-orange-500 text-white' : 'bg-purple-500 text-white'
-                            }`}
+                            } ${togglingShowResults === test._id ? 'opacity-50 cursor-not-allowed' : ''}`}
                           >
-                            {test.showResults ? 'Hide Results' : 'Show Results'}
+                            {togglingShowResults === test._id ? (
+                              <svg className="animate-spin h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                            ) : null}
+                            {togglingShowResults === test._id ? '...' : (test.showResults ? 'Hide Results' : 'Show Results')}
                           </button>
                         </div>
                         <div className="flex space-x-2">
@@ -486,9 +565,15 @@ const AdminTests = () => {
                         </button>
                         <button
                           onClick={() => deleteTest(test._id, test.title)}
-                          className="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700"
+                          disabled={isDeletingTest === test._id}
+                          className="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center"
                         >
-                          Delete
+                          {isDeletingTest === test._id ? (
+                            <svg className="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                          ) : 'Delete'}
                         </button>
                           <button
                             onClick={() => handleTestClick(test)}
@@ -606,10 +691,16 @@ const AdminTests = () => {
                 <div className="flex space-x-2">
                   <button
                     onClick={saveTest}
-                    disabled={!testForm.title.trim()}
-                    className="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700 disabled:bg-gray-400"
+                    disabled={!testForm.title.trim() || isSavingTest}
+                    className="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700 disabled:bg-gray-400 flex items-center space-x-2"
                   >
-                    Update Test
+                    {isSavingTest && (
+                      <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    )}
+                    <span>{isSavingTest ? 'Updating...' : 'Update Test'}</span>
                   </button>
                   <button
                     onClick={cancelTestEditing}
@@ -669,16 +760,17 @@ const AdminTests = () => {
                       items={questions.map(q => q._id)}
                       strategy={verticalListSortingStrategy}
                     >
-                      <div className="space-y-2">
-                        {questions.map(question => (
-                          <SortableQuestion
-                            key={question._id}
-                            question={question}
-                            onEdit={startEditingQuestion}
-                            onDelete={deleteQuestion}
-                          />
-                        ))}
-                      </div>
+                        <div className="space-y-2">
+                          {questions.map(question => (
+                            <SortableQuestion
+                              key={question._id}
+                              question={question}
+                              onEdit={startEditingQuestion}
+                              onDelete={deleteQuestion}
+                              isDeleting={isDeletingQuestion}
+                            />
+                          ))}
+                        </div>
                     </SortableContext>
                   </DndContext>
                 </div>
@@ -825,25 +917,31 @@ const AdminTests = () => {
                   />
                 </div>
 
-                <div className="flex space-x-2">
-                  <button
-                    onClick={saveQuestion}
-                    disabled={!questionForm.questionText.trim()}
-                    className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:bg-gray-400"
-                  >
-                    {editingQuestion ? 'Update Question' : 'Add Question'}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowQuestionForm(false);
-                      setEditingQuestion(null);
-                      resetQuestionForm();
-                    }}
-                    className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-                  >
-                    Cancel
-                  </button>
-                </div>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={saveQuestion}
+                      disabled={!isQuestionValid() || isSavingQuestion}
+                      className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:bg-gray-400 flex items-center space-x-2"
+                    >
+                      {isSavingQuestion && (
+                        <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                      )}
+                      <span>{isSavingQuestion ? 'Saving...' : (editingQuestion ? 'Update Question' : 'Add Question')}</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowQuestionForm(false);
+                        setEditingQuestion(null);
+                        resetQuestionForm();
+                      }}
+                      className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+                    >
+                      Cancel
+                    </button>
+                  </div>
               </div>
               )}
             </div>
