@@ -16,6 +16,7 @@ const TestTaking = () => {
   const [attemptId, setAttemptId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [tabSwitches, setTabSwitches] = useState(0);
+  const [submittedQuestions, setSubmittedQuestions] = useState(new Set());
 
   const fetchTest = async () => {
     try {
@@ -76,6 +77,7 @@ const TestTaking = () => {
       userAnswer: answer,
       timeTaken: 0 // Calculate properly
     });
+    setSubmittedQuestions(prev => new Set([...prev, questionId]));
   };
 
   const submitTest = async () => {
@@ -91,10 +93,12 @@ const TestTaking = () => {
     }
 
     try {
-      // Submit the current question's answer if not already submitted
-      const currentQuestionId = questions[currentQuestion]._id;
-      if (answers[currentQuestionId] !== undefined) {
-        await submitAnswer(currentQuestionId);
+      // Submit all pending answers
+      for (const question of questions) {
+        const qId = question._id;
+        if (answers[qId] !== undefined && !submittedQuestions.has(qId)) {
+          await submitAnswer(qId);
+        }
       }
 
       await API.post(`/attempts/${attemptId}/complete`);

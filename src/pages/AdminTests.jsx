@@ -1,5 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AuthContext } from '../context/AuthContext';
+import NotAuthorized from './NotAuthorized';
 import {
   DndContext,
   closestCenter,
@@ -93,8 +95,13 @@ const SortableQuestion = ({ question, onEdit, onDelete }) => {
 };
 
 const AdminTests = () => {
+  const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   const { modal, showModal } = useModal();
+
+  if (!user || user.role !== 'admin') {
+    return <NotAuthorized />;
+  }
   const [tests, setTests] = useState([]);
   const [selectedTest, setSelectedTest] = useState(null);
   const [questions, setQuestions] = useState([]);

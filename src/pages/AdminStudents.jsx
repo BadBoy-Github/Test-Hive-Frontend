@@ -1,12 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../utils/api';
 import { useModal } from '../components/Modal';
+import { AuthContext } from '../context/AuthContext';
+import NotAuthorized from './NotAuthorized';
 import Loader from '../components/Loader';
 
 const AdminStudents = () => {
+  const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   const { modal, showModal } = useModal();
+
+  if (!user || user.role !== 'admin') {
+    return <NotAuthorized />;
+  }
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingStudent, setEditingStudent] = useState(null);

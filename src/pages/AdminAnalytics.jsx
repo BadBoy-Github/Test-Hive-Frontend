@@ -1,10 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../utils/api';
+import { AuthContext } from '../context/AuthContext';
+import NotAuthorized from './NotAuthorized';
 import Loader from '../components/Loader';
 
 const AdminAnalytics = () => {
+  const { user } = useContext(AuthContext);
   const navigate = useNavigate();
+
+  if (!user || user.role !== 'admin') {
+    return <NotAuthorized />;
+  }
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
 

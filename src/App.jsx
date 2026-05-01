@@ -10,6 +10,9 @@ import AdminDashboard from './pages/AdminDashboard';
 import AdminTests from './pages/AdminTests';
 import AdminStudents from './pages/AdminStudents';
 import AdminAnalytics from './pages/AdminAnalytics';
+import AdminTestResults from './pages/AdminTestResults';
+import AdminAttemptDetail from './pages/AdminAttemptDetail';
+import NotFound from './pages/NotFound';
 
 function App() {
   return (
@@ -25,8 +28,11 @@ function App() {
           <Route path="/results/:testId" element={<TestResultDetail />} />
           <Route path="/admin/create-test" element={<AdminDashboard />} />
           <Route path="/admin/tests" element={<AdminTests />} />
+          <Route path="/admin/test-results" element={<AdminTestResults />} />
+          <Route path="/admin/attempt/:attemptId" element={<AdminAttemptDetail />} />
           <Route path="/admin/students" element={<AdminStudents />} />
           <Route path="/admin/analytics" element={<AdminAnalytics />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
       <Footer />

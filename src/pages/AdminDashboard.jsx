@@ -1,11 +1,18 @@
-import { useState } from 'react';
+import { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../utils/api';
 import { useModal } from '../components/Modal';
+import { AuthContext } from '../context/AuthContext';
+import NotAuthorized from './NotAuthorized';
 
 const AdminDashboard = () => {
+  const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   const { modal, showModal } = useModal();
+
+  if (!user || user.role !== 'admin') {
+    return <NotAuthorized />;
+  }
   const [testData, setTestData] = useState({
     title: '',
     description: '',
@@ -52,8 +59,6 @@ const AdminDashboard = () => {
           <div className="flex justify-between items-center py-6">
             <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
             <div className="flex space-x-4">
-              <button onClick={() => navigate('/admin/tests')} className="bg-blue-600 text-white px-4 py-2 rounded">Manage Tests</button>
-              <button onClick={() => navigate('/admin/analytics')} className="bg-green-600 text-white px-4 py-2 rounded">Analytics</button>
               <button onClick={() => navigate('/dashboard')} className="bg-gray-600 text-white px-4 py-2 rounded">Back to Dashboard</button>
             </div>
           </div>
@@ -162,6 +167,21 @@ const AdminDashboard = () => {
               </button>
             </div>
           </form>
+        </div>
+
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-blue-500 text-white p-6 rounded-lg shadow cursor-pointer hover:bg-blue-600" onClick={() => navigate('/admin/tests')}>
+            <h3 className="text-xl font-semibold">Manage Tests</h3>
+            <p>Create, edit, and manage your tests.</p>
+          </div>
+          <div className="bg-purple-500 text-white p-6 rounded-lg shadow cursor-pointer hover:bg-purple-600" onClick={() => navigate('/admin/test-results')}>
+            <h3 className="text-xl font-semibold">Test Results</h3>
+            <p>View and analyze test results.</p>
+          </div>
+          <div className="bg-green-500 text-white p-6 rounded-lg shadow cursor-pointer hover:bg-green-600" onClick={() => navigate('/admin/analytics')}>
+            <h3 className="text-xl font-semibold">Analytics</h3>
+            <p>View detailed analytics and reports.</p>
+          </div>
         </div>
       </main>
       {modal}
