@@ -152,7 +152,10 @@ const AdminStudents = () => {
           <div className="bg-white p-6 rounded-lg shadow">
             <h2 className="text-xl font-bold text-gray-900 mb-4">All Students ({students.length})</h2>
             <div className="space-y-4 max-h-96 overflow-y-auto">
-              {students.map(student => (
+              {students.length === 0 ? (
+                <p className="text-gray-500">No students registered yet.</p>
+              ) : (
+                students.map(student => (
                 <div key={student._id} className="border border-gray-200 rounded p-4">
                   <div className="flex justify-between items-start">
                     <div>
@@ -177,7 +180,8 @@ const AdminStudents = () => {
                     </div>
                   </div>
                 </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
 

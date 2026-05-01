@@ -163,8 +163,13 @@ const Dashboard = () => {
             <h2 className="text-2xl font-bold text-gray-900 mb-6">
               Available Tests
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {tests.map((test) => {
+            {tests.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-gray-500">No tests available yet.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {tests.map((test) => {
                 const userAttemptCount = userAttempts[test._id] || 0;
                 const hasCompleted = userAttemptCount >= test.maxAttempts;
 
@@ -197,8 +202,9 @@ const Dashboard = () => {
                     )}
                   </div>
                 );
-              })}
-            </div>
+                })}
+              </div>
+            )}
           </div>
         )}
       </main>

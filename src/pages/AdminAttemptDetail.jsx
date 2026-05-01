@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import API from '../utils/api';
 import NotAuthorized from './NotAuthorized';
+import Loader from '../components/Loader';
 
 const AdminAttemptDetail = () => {
   const { attemptId } = useParams();
@@ -31,7 +32,7 @@ const AdminAttemptDetail = () => {
     }
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <Loader message="Loading attempt details..." />;
   if (!attempt) return <div>Attempt not found</div>;
 
   return (
