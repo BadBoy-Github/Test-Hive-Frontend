@@ -2,7 +2,8 @@ import { useContext, useEffect, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import API from '../utils/api';
-import { FaPlus, FaList, FaChartBar } from 'react-icons/fa';
+import { FaPlus, FaList, FaChartBar, FaUsers } from 'react-icons/fa';
+import Loader from '../components/Loader';
 
 const Dashboard = () => {
   const { user, logout, getSessionTimeRemaining, loading } = useContext(AuthContext);
@@ -51,7 +52,7 @@ const Dashboard = () => {
     return () => clearInterval(interval);
   }, [user, loading, navigate, getSessionTimeRemaining]);
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <Loader />;
   if (!user) return null; // Will redirect to login
 
   return (
@@ -75,7 +76,7 @@ const Dashboard = () => {
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         {user.role === 'admin' ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="bg-white p-6 rounded-lg shadow">
               <FaPlus className="text-3xl text-indigo-600 mb-4" />
               <h3 className="text-lg font-medium text-gray-900">Create Test</h3>
@@ -94,6 +95,12 @@ const Dashboard = () => {
               <p className="text-gray-500">View test results and statistics</p>
               <button onClick={() => navigate('/admin/analytics')} className="mt-4 bg-blue-600 text-white px-4 py-2 rounded">View</button>
             </div>
+            <div className="bg-white p-6 rounded-lg shadow">
+              <FaUsers className="text-3xl text-purple-600 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900">View Students</h3>
+              <p className="text-gray-500">Manage student details</p>
+              <button onClick={() => navigate('/admin/students')} className="mt-4 bg-purple-600 text-white px-4 py-2 rounded">View</button>
+            </div>
           </div>
         ) : (
           <div>
@@ -105,14 +112,31 @@ const Dashboard = () => {
 
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Available Tests</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {tests.map(test => (
-                <div key={test._id} className="bg-white p-6 rounded-lg shadow">
-                  <h3 className="text-xl font-semibold text-gray-900">{test.title}</h3>
-                  <p className="text-gray-600 mt-2">{test.description}</p>
-                  <p className="text-sm text-gray-500 mt-2">Duration: {test.duration} minutes</p>
-                  <button onClick={() => navigate(`/test/${test._id}`)} className="mt-4 bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">Start Test</button>
-                </div>
-              ))}
+              {tests.map(test => {
+                const userAttemptCount = userAttempts[test._id] || 0;
+                const hasCompleted = userAttemptCount >= test.maxAttempts;
+
+                return (
+                  <div key={test._id} className="bg-white p-6 rounded-lg shadow">
+                    <h3 className="text-xl font-semibold text-gray-900">{test.title}</h3>
+                    <p className="text-gray-600 mt-2">{test.description}</p>
+                    <p className="text-sm text-gray-500 mt-2">Duration: {test.duration} minutes</p>
+                    <p className="text-sm text-gray-500">Attempts: {userAttemptCount}/{test.maxAttempts}</p>
+                    {hasCompleted ? (
+                      <div className="mt-4 px-4 py-2 bg-green-100 text-green-800 rounded text-center font-medium">
+                        Completed
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => navigate(`/test/${test._id}`)}
+                        className="mt-4 bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
+                      >
+                        Start Test
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

@@ -106,7 +106,7 @@ const AdminTests = () => {
   const [questionForm, setQuestionForm] = useState({
     questionText: '',
     type: 'mcq',
-    options: ['', '', '', ''],
+    options: [''],
     correctAnswer: [],
     marks: 1,
     explanation: ''
@@ -131,7 +131,7 @@ const AdminTests = () => {
 
   const fetchTests = async () => {
     try {
-      const res = await API.get('/tests/admin/all');
+      const res = await API.get('/admin/tests');
       setTests(res.data);
     } catch (err) {
       console.error(err);
@@ -165,7 +165,7 @@ const AdminTests = () => {
 
   const toggleTestStatus = async (testId, currentStatus) => {
     try {
-      await API.patch(`/tests/admin/${testId}`, { isActive: !currentStatus });
+      await API.patch(`/admin/tests/${testId}`, { isActive: !currentStatus });
       fetchTests();
     } catch (err) {
       console.error(err);
@@ -174,7 +174,7 @@ const AdminTests = () => {
 
   const toggleShowResults = async (testId, currentStatus) => {
     try {
-      await API.patch(`/tests/admin/${testId}`, { showResults: !currentStatus });
+      await API.patch(`/admin/tests/${testId}`, { showResults: !currentStatus });
       fetchTests();
     } catch (err) {
       console.error(err);
@@ -206,6 +206,25 @@ const AdminTests = () => {
       setQuestionForm({ ...questionForm, [name]: value, correctAnswer: [] });
     } else {
       setQuestionForm({ ...questionForm, [name]: value });
+    }
+  };
+
+  const addOption = () => {
+    setQuestionForm({
+      ...questionForm,
+      options: [...questionForm.options, '']
+    });
+  };
+
+  const removeOption = (index) => {
+    if (questionForm.options.length > 1) {
+      const updatedOptions = questionForm.options.filter((_, i) => i !== index);
+      const updatedCorrectAnswer = questionForm.correctAnswer.filter(answer => answer !== questionForm.options[index]);
+      setQuestionForm({
+        ...questionForm,
+        options: updatedOptions,
+        correctAnswer: updatedCorrectAnswer
+      });
     }
   };
 
@@ -692,15 +711,26 @@ const AdminTests = () => {
 
                   {(questionForm.type === 'mcq' || questionForm.type === 'checkbox') && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Options
-                        {questionForm.type === 'checkbox' && (
-                          <span className="text-xs text-gray-500 ml-2">Check the correct answers below</span>
-                        )}
-                        {questionForm.type === 'mcq' && (
-                          <span className="text-xs text-gray-500 ml-2">Select the correct answer below</span>
-                        )}
-                      </label>
+                      <div className="mb-2">
+                        <div className="flex justify-between items-center">
+                          <label className="block text-sm font-medium text-gray-700">
+                            Options
+                            {questionForm.type === 'checkbox' && (
+                              <span className="text-xs text-gray-500 ml-2">Check the correct answers below</span>
+                            )}
+                            {questionForm.type === 'mcq' && (
+                              <span className="text-xs text-gray-500 ml-2">Select the correct answer below</span>
+                            )}
+                          </label>
+                          <button
+                            type="button"
+                            onClick={addOption}
+                            className="px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700"
+                          >
+                            + Add Option
+                          </button>
+                        </div>
+                      </div>
                       {questionForm.options.map((option, index) => (
                         <div key={index} className="flex items-center space-x-2 mb-2">
                           <span className="text-sm font-medium w-6">{String.fromCharCode(65 + index)}.</span>
@@ -729,6 +759,15 @@ const AdminTests = () => {
                             }}
                             className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-gray-300"
                           />
+                          {questionForm.options.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeOption(index)}
+                              className="px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700"
+                            >
+                              ×
+                            </button>
+                          )}
                         </div>
                       ))}
                     </div>

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import API from '../utils/api';
 import { useModal } from '../components/Modal';
+import Loader from '../components/Loader';
 
 const TestTaking = () => {
   const { testId } = useParams();
@@ -153,7 +154,7 @@ const TestTaking = () => {
     }
   };
 
-  if (loading || !test || questions.length === 0) return <div>Loading...</div>;
+  if (loading || !test || questions.length === 0) return <Loader message="Loading test..." />;
 
   const question = questions[currentQuestion];
 

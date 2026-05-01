@@ -3,8 +3,11 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import TestTaking from './pages/TestTaking';
 import TestResults from './pages/TestResults';
+import TestResultDetail from './pages/TestResultDetail';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminTests from './pages/AdminTests';
+import AdminStudents from './pages/AdminStudents';
+import AdminAnalytics from './pages/AdminAnalytics';
 
 function App() {
   return (
@@ -14,8 +17,11 @@ function App() {
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/test/:testId" element={<TestTaking />} />
       <Route path="/results" element={<TestResults />} />
+      <Route path="/results/:testId" element={<TestResultDetail />} />
       <Route path="/admin/create-test" element={<AdminDashboard />} />
       <Route path="/admin/tests" element={<AdminTests />} />
+      <Route path="/admin/students" element={<AdminStudents />} />
+      <Route path="/admin/analytics" element={<AdminAnalytics />} />
     </Routes>
   );
 }
