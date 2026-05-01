@@ -11,9 +11,6 @@ const AdminStudents = () => {
   const navigate = useNavigate();
   const { modal, showModal } = useModal();
 
-  if (!user || user.role !== 'admin') {
-    return <NotAuthorized />;
-  }
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingStudent, setEditingStudent] = useState(null);
@@ -38,6 +35,10 @@ const AdminStudents = () => {
   useEffect(() => {
     fetchStudents();
   }, []);
+
+  if (!user || user.role !== 'admin') {
+    return <NotAuthorized />;
+  }
 
   const resetStudentForm = () => {
     setStudentForm({

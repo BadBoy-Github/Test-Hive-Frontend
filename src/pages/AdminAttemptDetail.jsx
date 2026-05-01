@@ -12,14 +12,6 @@ const AdminAttemptDetail = () => {
   const [attempt, setAttempt] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  if (!user || user.role !== 'admin') {
-    return <NotAuthorized />;
-  }
-
-  useEffect(() => {
-    fetchAttempt();
-  }, [attemptId]);
-
   const fetchAttempt = async () => {
     try {
       // Need a new endpoint to get attempt by id for admin
@@ -31,6 +23,14 @@ const AdminAttemptDetail = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchAttempt();
+  }, [attemptId]);
+
+  if (!user || user.role !== 'admin') {
+    return <NotAuthorized />;
+  }
 
   if (loading) return <Loader message="Loading attempt details..." />;
   if (!attempt) return <div>Attempt not found</div>;

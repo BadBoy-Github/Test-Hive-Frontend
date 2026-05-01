@@ -99,9 +99,7 @@ const AdminTests = () => {
   const navigate = useNavigate();
   const { modal, showModal } = useModal();
 
-  if (!user || user.role !== 'admin') {
-    return <NotAuthorized />;
-  }
+  // All hooks must be called before any conditional logic
   const [tests, setTests] = useState([]);
   const [selectedTest, setSelectedTest] = useState(null);
   const [questions, setQuestions] = useState([]);
@@ -129,25 +127,29 @@ const AdminTests = () => {
     maxAttempts: 1
   });
 
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
+    const fetchTests = async () => {
+     try {
+       const res = await API.get('/admin/tests');
+       setTests(res.data);
+     } catch (err) {
+       console.error(err);
+     }
+   };
 
-  const fetchTests = async () => {
-    try {
-      const res = await API.get('/admin/tests');
-      setTests(res.data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+   const sensors = useSensors(
+     useSensor(PointerSensor),
+     useSensor(KeyboardSensor, {
+       coordinateGetter: sortableKeyboardCoordinates,
+     })
+   );
 
-  useEffect(() => {
-    fetchTests();
-  }, []);
+   useEffect(() => {
+     fetchTests();
+   }, []);
+
+   if (!user || user.role !== 'admin') {
+     return <NotAuthorized />;
+   }
 
   const fetchQuestions = async (testId) => {
     try {

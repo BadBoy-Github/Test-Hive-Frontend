@@ -11,9 +11,6 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const { modal, showModal } = useModal();
 
-  if (!user || user.role !== 'admin') {
-    return <NotAuthorized />;
-  }
   const [testData, setTestData] = useState({
     title: '',
     description: '',
@@ -23,6 +20,10 @@ const AdminDashboard = () => {
     negativeMarkingValue: 0,
     maxAttempts: 1
   });
+
+  if (!user || user.role !== 'admin') {
+    return <NotAuthorized />;
+  }
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;

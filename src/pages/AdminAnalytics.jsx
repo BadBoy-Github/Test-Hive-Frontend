@@ -9,9 +9,6 @@ const AdminAnalytics = () => {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  if (!user || user.role !== 'admin') {
-    return <NotAuthorized />;
-  }
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -29,6 +26,10 @@ const AdminAnalytics = () => {
   useEffect(() => {
     fetchAnalytics();
   }, []);
+
+  if (!user || user.role !== 'admin') {
+    return <NotAuthorized />;
+  }
 
   if (loading) return <Loader message="Loading analytics..." />;
 
