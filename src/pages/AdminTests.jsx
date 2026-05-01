@@ -126,7 +126,8 @@ const AdminTests = () => {
     options: [''],
     correctAnswer: [],
     marks: 1,
-    explanation: ''
+    explanation: '',
+    imageUrl: ''
   });
 
   const [testForm, setTestForm] = useState({
@@ -215,7 +216,8 @@ const AdminTests = () => {
       options: ['', '', '', ''],
       correctAnswer: [],
       marks: 1,
-      explanation: ''
+      explanation: '',
+      imageUrl: ''
     });
   };
 
@@ -293,7 +295,8 @@ const AdminTests = () => {
       options: question.options || ['', '', '', ''],
       correctAnswer: question.correctAnswer || [],
       marks: question.marks,
-      explanation: question.explanation || ''
+      explanation: question.explanation || '',
+      imageUrl: question.imageUrl || ''
     });
     setShowQuestionForm(true);
   };
@@ -793,6 +796,35 @@ const AdminTests = () => {
                       className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
                       placeholder="Enter your question here..."
                     />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Question Image URL (Optional)</label>
+                    <input
+                      type="url"
+                      name="imageUrl"
+                      value={questionForm.imageUrl}
+                      onChange={handleQuestionFormChange}
+                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                      placeholder="https://example.com/image.jpg"
+                    />
+                    {questionForm.imageUrl && (
+                      <div className="mt-2">
+                        <img
+                          src={questionForm.imageUrl}
+                          alt="Question preview"
+                          className="max-w-xs max-h-48 object-contain border rounded"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            showModal({
+                              title: 'Invalid Image URL',
+                              message: 'Could not load image from the provided URL.',
+                              type: 'confirm'
+                            });
+                          }}
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <div>

@@ -73,22 +73,34 @@ const AdminAttemptDetail = () => {
                   
                   return (
                     <div key={answer._id} className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-                      {/* Question Header */}
-                      <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            <h4 className="text-lg font-semibold text-gray-900">
-                              Question {index + 1}: {question.questionText}
-                            </h4>
-                            <p className="text-sm text-gray-500 mt-1">
-                              {question.type.toUpperCase()} • {question.marks} mark{question.marks !== 1 ? 's' : ''}
-                            </p>
-                          </div>
-                          <div className={`text-lg font-bold ${pointsColor} ml-4`}>
-                            {answer.marksObtained}/{question.marks}
-                          </div>
-                        </div>
-                      </div>
+                       {/* Question Header */}
+                       <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                         <div className="flex justify-between items-start">
+                           <div className="flex-1">
+                             <h4 className="text-lg font-semibold text-gray-900">
+                               Question {index + 1}: {question.questionText}
+                             </h4>
+                             {question.imageUrl && (
+                               <div className="mt-2 mb-3">
+                                 <img
+                                   src={question.imageUrl}
+                                   alt="Question image"
+                                   className="max-w-md max-h-64 object-contain border rounded shadow-sm"
+                                   onError={(e) => {
+                                     e.target.style.display = 'none';
+                                   }}
+                                 />
+                               </div>
+                             )}
+                             <p className="text-sm text-gray-500">
+                               {question.type.toUpperCase()} • {question.marks} mark{question.marks !== 1 ? 's' : ''}
+                             </p>
+                           </div>
+                           <div className={`text-lg font-bold ${pointsColor} ml-4`}>
+                             {answer.marksObtained}/{question.marks}
+                           </div>
+                         </div>
+                       </div>
 
                       {/* Question Body */}
                       <div className="p-6">
