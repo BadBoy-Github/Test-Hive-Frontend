@@ -85,7 +85,7 @@ const Dashboard = () => {
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         {user.role === "admin" ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="bg-white p-6 rounded-lg shadow card-hover">
               <FaPlus className="text-3xl text-indigo-600 mb-4" />
               <h3 className="text-lg font-medium text-gray-900">Create Test</h3>
@@ -110,6 +110,19 @@ const Dashboard = () => {
                 Manage
               </button>
             </div>
+            <div className="bg-white p-6 rounded-lg shadow card-hover">
+              <FaPoll className="text-3xl text-blue-600 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900">
+                Test Results
+              </h3>
+              <p className="text-gray-500">View test results and statistics</p>
+              <button
+                onClick={() => navigate("/admin/test-results")}
+                className="mt-4 btn-gradient-primary"
+              >
+                View
+              </button>
+            </div>
 
             <div className="bg-white p-6 rounded-lg shadow card-hover">
               <FaUsers className="text-3xl text-purple-600 mb-4" />
@@ -124,19 +137,7 @@ const Dashboard = () => {
                 View
               </button>
             </div>
-            <div className="bg-white p-6 rounded-lg shadow card-hover">
-              <FaPoll className="text-3xl text-blue-600 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900">
-                Test Results
-              </h3>
-              <p className="text-gray-500">View test results and statistics</p>
-              <button
-                onClick={() => navigate("/admin/test-results")}
-                className="mt-4 btn-gradient-primary"
-              >
-                View
-              </button>
-            </div>
+
             <div className="bg-white p-6 rounded-lg shadow card-hover">
               <FaChartBar className="text-3xl text-blue-600 mb-4" />
               <h3 className="text-lg font-medium text-gray-900">Analytics</h3>
@@ -182,38 +183,38 @@ const Dashboard = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {tests.map((test) => {
-                const userAttemptCount = userAttempts[test._id] || 0;
-                const hasCompleted = userAttemptCount >= test.maxAttempts;
+                  const userAttemptCount = userAttempts[test._id] || 0;
+                  const hasCompleted = userAttemptCount >= test.maxAttempts;
 
-                return (
-                  <div
-                    key={test._id}
-                    className="bg-white p-6 rounded-lg shadow card-hover"
-                  >
-                    <h3 className="text-xl font-semibold text-gray-900">
-                      {test.title}
-                    </h3>
-                    <p className="text-gray-600 mt-2">{test.description}</p>
-                    <p className="text-sm text-gray-500 mt-2">
-                      Duration: {test.duration} minutes
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      Attempts: {userAttemptCount}/{test.maxAttempts}
-                    </p>
-                    {hasCompleted ? (
-                      <div className="mt-4 px-4 py-2 bg-green-100 text-green-800 rounded text-center font-medium">
-                        Completed
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => navigate(`/test/${test._id}`)}
-                        className="mt-4 btn-gradient-primary w-full"
-                      >
-                        Start Test
-                      </button>
-                    )}
-                  </div>
-                );
+                  return (
+                    <div
+                      key={test._id}
+                      className="bg-white p-6 rounded-lg shadow card-hover"
+                    >
+                      <h3 className="text-xl font-semibold text-gray-900">
+                        {test.title}
+                      </h3>
+                      <p className="text-gray-600 mt-2">{test.description}</p>
+                      <p className="text-sm text-gray-500 mt-2">
+                        Duration: {test.duration} minutes
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        Attempts: {userAttemptCount}/{test.maxAttempts}
+                      </p>
+                      {hasCompleted ? (
+                        <div className="mt-4 px-4 py-2 bg-green-100 text-green-800 rounded text-center font-medium">
+                          Completed
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => navigate(`/test/${test._id}`)}
+                          className="mt-4 btn-gradient-primary w-full"
+                        >
+                          Start Test
+                        </button>
+                      )}
+                    </div>
+                  );
                 })}
               </div>
             )}
