@@ -482,7 +482,13 @@ const AdminTests = () => {
           <div className="bg-white p-6 rounded-lg shadow">
             <h2 className="text-xl font-bold text-gray-900 mb-4">All Tests</h2>
             <div className="space-y-4">
-              {tests.map(test => (
+              {tests.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-gray-500 text-lg mb-2">No tests found</p>
+                  <p className="text-gray-400 text-sm">Nothing to test now. Consider adding a test to get started.</p>
+                </div>
+              ) : (
+                tests.map(test => (
                 <div key={test._id} className={`border rounded p-4 ${
                   editingTest && editingTest._id === test._id
                     ? 'border-blue-500 bg-blue-50'
@@ -573,7 +579,7 @@ const AdminTests = () => {
                       </div>
                   </div>
                 </div>
-              ))}
+              )))}
             </div>
           </div>
 
