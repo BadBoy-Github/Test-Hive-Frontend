@@ -140,25 +140,13 @@ const AdminStudents = () => {
               Student Management
             </h1>
             <div className="flex space-x-4">
-              {!showStudentForm && (
-                <button
-                  onClick={() => {
-                    setEditingStudent(null);
-                    resetStudentForm();
-                    setShowStudentForm(true);
-                  }}
-                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-                >
-                  Add Student
-                </button>
-              )}
-              <button
-                onClick={() => navigate("/dashboard")}
-                className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition-colors "
-              >
-                Back to Dashboard
-              </button>
-            </div>
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition-colors "
+            >
+              Back to Dashboard
+            </button>
+          </div>
           </div>
         </div>
       </header>
