@@ -27,7 +27,7 @@ const Leaderboard = () => {
     try {
       const [testsRes, leaderboardRes] = await Promise.all([
         API.get('/tests'),
-        selectedTest === 'all' ? API.get('/admin/leaderboard') : API.get(`/admin/leaderboard/${selectedTest}`)
+        selectedTest === 'all' ? API.get('/attempts/leaderboard') : API.get(`/attempts/leaderboard/${selectedTest}`)
       ]);
       setTests(testsRes.data);
       setLeaderboard(leaderboardRes.data);

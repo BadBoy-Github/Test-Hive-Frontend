@@ -1,12 +1,26 @@
 import { createContext, useState, useEffect } from 'react';
 import API from '../utils/api';
 
+// Helper function to decode Base64URL-encoded JWT payload
+const decodeJWT = (token) => {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    // Add padding if needed
+    const padded = base64.padEnd(base64.length + (4 - base64.length % 4) % 4, '=');
+    return JSON.parse(atob(padded));
+  } catch (error) {
+    return null;
+  }
+};
+
 // Helper function to check if token is expired
 const isTokenExpired = (token) => {
   if (!token) return true;
 
   try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
+    const payload = decodeJWT(token);
+    if (!payload) return true;
     const currentTime = Date.now() / 1000;
     return payload.exp < currentTime;
   } catch (error) {
@@ -19,7 +33,8 @@ const getTokenExpiration = (token) => {
   if (!token) return null;
 
   try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
+    const payload = decodeJWT(token);
+    if (!payload) return null;
     return new Date(payload.exp * 1000);
   } catch (error) {
     return null;

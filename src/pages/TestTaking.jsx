@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import API from '../utils/api';
 import { useModal } from '../components/Modal';
@@ -23,6 +23,9 @@ const TestTaking = () => {
   const [flaggedQuestions, setFlaggedQuestions] = useState(new Set());
   const [zoomedImage, setZoomedImage] = useState(null);
   const [showConfetti, setShowConfetti] = useState(false);
+  const questionStartTimeRef = useRef(null);
+  const submitTestRef = useRef(null);
+  const showModalRef = useRef(showModal);
 
   const shuffleArray = (array) => {
     const shuffled = [...array];
@@ -109,10 +112,12 @@ const TestTaking = () => {
 
   const submitAnswer = async (questionId) => {
     const answer = answers[questionId];
+    const startTime = questionStartTimeRef.current;
+    const timeTaken = startTime ? (Date.now() - startTime) / 1000 : 0;
     await API.post(`/attempts/${attemptId}/answer`, {
       questionId,
       userAnswer: answer,
-      timeTaken: 0
+      timeTaken
     });
     setSubmittedQuestions(prev => new Set([...prev, questionId]));
   };
@@ -166,58 +171,75 @@ const TestTaking = () => {
     }
   };
 
-  useEffect(() => {
-    fetchTest();
-  }, []);
+   useEffect(() => {
+     fetchTest();
+   }, []);
 
-  useEffect(() => {
-    if (timeLeft > 0) {
-      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-      return () => clearTimeout(timer);
-    } else if (timeLeft === 0 && test && attemptId) {
-      submitTest();
-    }
-  }, [timeLeft, test, attemptId]);
+   // Track time spent on current question
+   useEffect(() => {
+     if (questions.length > 0) {
+       questionStartTimeRef.current = Date.now();
+     }
+   }, [currentQuestion, questions]);
 
-  const MAX_TAB_SWITCHES = 3;
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        setTabSwitches(prev => {
-          const newCount = prev + 1;
-          if (newCount > MAX_TAB_SWITCHES) {
-            submitTest();
-          }
-          return newCount;
-        });
-      }
-    };
+    // Keep submitTestRef up to date
+    useEffect(() => {
+      submitTestRef.current = submitTest;
+    });
 
-    const preventActions = (e) => {
-      e.preventDefault();
-      showModal({
-        title: 'Action Not Allowed',
-        message: 'Copy, paste, cut, or right-click is disabled during the test.',
-        onConfirm: () => {},
-        confirmText: 'OK',
-        type: 'confirm'
-      });
-    };
+    // Keep showModalRef up to date
+    useEffect(() => {
+      showModalRef.current = showModal;
+    });
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    document.addEventListener('copy', preventActions);
-    document.addEventListener('paste', preventActions);
-    document.addEventListener('cut', preventActions);
-    document.addEventListener('contextmenu', preventActions);
+   useEffect(() => {
+     if (timeLeft > 0) {
+       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
+       return () => clearTimeout(timer);
+     } else if (timeLeft === 0 && test && attemptId) {
+       submitTestRef.current?.();
+     }
+   }, [timeLeft, test, attemptId]);
 
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      document.removeEventListener('copy', preventActions);
-      document.removeEventListener('paste', preventActions);
-      document.removeEventListener('cut', preventActions);
-      document.removeEventListener('contextmenu', preventActions);
-    };
-  }, [attemptId, showModal, submitTest]);
+   const MAX_TAB_SWITCHES = 3;
+   useEffect(() => {
+     const handleVisibilityChange = () => {
+       if (document.hidden) {
+         setTabSwitches(prev => {
+           const newCount = prev + 1;
+           if (newCount > MAX_TAB_SWITCHES) {
+             submitTestRef.current?.();
+           }
+           return newCount;
+         });
+       }
+     };
+
+     const preventActions = (e) => {
+       e.preventDefault();
+       showModalRef.current({
+         title: 'Action Not Allowed',
+         message: 'Copy, paste, cut, or right-click is disabled during the test.',
+         onConfirm: () => {},
+         confirmText: 'OK',
+         type: 'confirm'
+       });
+     };
+
+     document.addEventListener('visibilitychange', handleVisibilityChange);
+     document.addEventListener('copy', preventActions);
+     document.addEventListener('paste', preventActions);
+     document.addEventListener('cut', preventActions);
+     document.addEventListener('contextmenu', preventActions);
+
+     return () => {
+       document.removeEventListener('visibilitychange', handleVisibilityChange);
+       document.removeEventListener('copy', preventActions);
+       document.removeEventListener('paste', preventActions);
+       document.removeEventListener('cut', preventActions);
+       document.removeEventListener('contextmenu', preventActions);
+     };
+   }, []); // Run once on mount
 
   const handleAnswer = (questionId, answer, isCheckbox = false) => {
     if (isCheckbox) {

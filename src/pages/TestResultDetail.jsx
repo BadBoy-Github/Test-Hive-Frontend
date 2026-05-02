@@ -25,14 +25,14 @@ const TestResultDetail = () => {
          .sort((a, b) => new Date(a.endTime) - new Date(b.endTime));
        setResults(testResults);
 
-       // Check for first-attempt pass (show confetti)
-       if (testResults.length > 0) {
-         const firstAttempt = testResults[0];
-         const passingScore = testResults[0].testId.passingScore || 50;
-         if (firstAttempt.score >= passingScore && firstAttempt.attemptNumber === 1) {
-           setShowConfetti(true);
-         }
-       }
+        // Check for first-attempt pass (show confetti)
+        if (testResults.length > 0) {
+          const firstAttempt = testResults[0];
+          const passingScore = testResults[0].testId.passingScore || 50;
+          if (firstAttempt.score >= passingScore && firstAttempt.isFirstAttempt) {
+            setShowConfetti(true);
+          }
+        }
      } catch (err) {
        console.error(err);
      } finally {

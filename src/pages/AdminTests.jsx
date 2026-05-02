@@ -130,7 +130,7 @@ const AdminTests = () => {
 
   const fetchTests = async () => {
     try {
-      const res = await API.get('/tests');
+      const res = await API.get('/admin/tests');
       setTests(res.data);
     } catch (err) {
       console.error(err);
