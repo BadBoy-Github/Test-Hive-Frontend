@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom';
-import DarkModeToggle from './DarkModeToggle';
 
 const Header = () => {
   return (
@@ -8,7 +7,6 @@ const Header = () => {
         <Link to="/dashboard" className="text-2xl font-bold hover:text-gray-200">
           Test Hive
         </Link>
-        <DarkModeToggle />
       </div>
     </header>
   );

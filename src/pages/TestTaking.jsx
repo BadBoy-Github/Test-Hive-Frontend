@@ -290,20 +290,20 @@ const TestTaking = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <header className="bg-white dark:bg-gray-800 shadow p-4">
+    <div className="min-h-screen bg-gray-50">
+      <header className="bg-white shadow p-4">
         <div className="flex justify-between items-center">
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">{test.title}</h1>
+          <h1 className="text-xl font-bold text-gray-900">{test.title}</h1>
           <div className="flex items-center space-x-4">
-            <div className="text-lg font-mono text-gray-700 dark:text-gray-300">
+            <div className="text-lg font-mono text-gray-700">
               Time Left: {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
             </div>
             <button
               onClick={toggleFlag}
               className={`px-3 py-1 rounded text-sm font-medium border ${
                 flaggedQuestions.has(questions[currentQuestion]?._id)
-                  ? 'bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-900 dark:text-orange-300'
-                  : 'bg-gray-100 text-gray-700 border-gray-300 dark:bg-gray-700 dark:text-gray-300'
+                  ? 'bg-orange-100 text-orange-700 border-orange-300'
+                  : 'bg-gray-100 text-gray-700 border-gray-300'
               }`}
             >
               {flaggedQuestions.has(questions[currentQuestion]?._id) ? '🚩 Flagged' : '🚩 Flag'}
@@ -315,19 +315,19 @@ const TestTaking = () => {
       <main className="max-w-7xl mx-auto p-6">
         <div className="flex gap-6">
           <div className="flex-1">
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+            <div className="bg-white p-6 rounded-lg shadow">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                <h2 className="text-lg font-semibold text-gray-900">
                   Question {currentQuestion + 1} of {questions.length}
                 </h2>
                 <span className={`px-2 py-1 rounded text-xs font-medium ${
-                  question.marks === 1 ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+                  question.marks === 1 ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'
                 }`}>
                   {question.marks} mark{question.marks !== 1 ? 's' : ''}
                 </span>
               </div>
 
-              <p className="mb-4 text-lg text-gray-800 dark:text-gray-200">{question.questionText}</p>
+              <p className="mb-4 text-lg text-gray-800">{question.questionText}</p>
 
               {question.imageUrl && (
                 <div className="mb-6">
@@ -352,8 +352,8 @@ const TestTaking = () => {
                         key={index}
                         className={`flex items-center p-3 rounded-lg border cursor-pointer transition-all ${
                           isSelected
-                            ? 'bg-indigo-50 border-indigo-500 dark:bg-indigo-900 dark:border-indigo-400'
-                            : 'bg-gray-50 border-gray-200 dark:bg-gray-700 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600'
+                            ? 'bg-indigo-50 border-indigo-500'
+                            : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
                         }`}
                       >
                         <input
@@ -364,7 +364,7 @@ const TestTaking = () => {
                           onChange={() => handleAnswer(question._id, option, question.type === 'checkbox')}
                           className="mr-3 h-4 w-4"
                         />
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        <span className="text-sm font-medium text-gray-700">
                           {String.fromCharCode(65 + index)}. {option}
                         </span>
                       </label>
@@ -375,7 +375,7 @@ const TestTaking = () => {
 
               {question.type === 'descriptive' && (
                 <textarea
-                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500"
                   rows="6"
                   value={answers[question._id] || ''}
                   onChange={(e) => handleAnswer(question._id, e.target.value)}
@@ -385,7 +385,7 @@ const TestTaking = () => {
 
               {question.type === 'coding' && (
                 <textarea
-                  className="w-full p-3 border rounded-lg font-mono text-sm focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  className="w-full p-3 border rounded-lg font-mono text-sm focus:ring-2 focus:ring-indigo-500"
                   rows="12"
                   value={answers[question._id] || ''}
                   onChange={(e) => handleAnswer(question._id, e.target.value)}
@@ -428,8 +428,8 @@ const TestTaking = () => {
           </div>
 
           <div className="w-64 hidden lg:block">
-            <div className="sticky top-6 bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+            <div className="sticky top-6 bg-white p-4 rounded-lg shadow">
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">
                 Question Navigation
               </h3>
               <div className="grid grid-cols-5 gap-2">
@@ -445,23 +445,23 @@ const TestTaking = () => {
                 ))}
               </div>
 
-              <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="mt-4 pt-4 border-t border-gray-200">
                 <div className="space-y-2 text-xs">
                   <div className="flex items-center space-x-2">
                     <span className="w-4 h-4 rounded-full bg-indigo-600"></span>
-                    <span className="text-gray-600 dark:text-gray-400">Current</span>
+                    <span className="text-gray-600">Current</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <span className="w-4 h-4 rounded-full bg-green-100 text-green-800 border border-green-300 flex items-center justify-center text-[10px]">✓</span>
-                    <span className="text-gray-600 dark:text-gray-400">Answered</span>
+                    <span className="text-gray-600">Answered</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <span className="w-4 h-4 rounded-full bg-orange-100 text-orange-800 border border-orange-300 flex items-center justify-center text-[10px]">🚩</span>
-                    <span className="text-gray-600 dark:text-gray-400">Flagged</span>
+                    <span className="text-gray-600">Flagged</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <span className="w-4 h-4 rounded-full bg-gray-100 text-gray-600 border border-gray-300 flex items-center justify-center text-[10px]">-</span>
-                    <span className="text-gray-600 dark:text-gray-400">Not Answered</span>
+                    <span className="text-gray-600">Not Answered</span>
                   </div>
                 </div>
               </div>

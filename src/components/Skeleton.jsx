@@ -1,9 +1,9 @@
 const Skeleton = ({ className = '' }) => (
-  <div className={`animate-pulse bg-gray-200 dark:bg-gray-700 rounded ${className}`} />
+  <div className={`animate-pulse bg-gray-200 rounded ${className}`} />
 );
 
 const CardSkeleton = () => (
-  <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow space-y-4">
+  <div className="bg-white p-6 rounded-lg shadow space-y-4">
     <Skeleton className="h-6 w-3/4" />
     <Skeleton className="h-4 w-full" />
     <Skeleton className="h-4 w-5/6" />
@@ -15,7 +15,7 @@ const CardSkeleton = () => (
 );
 
 const QuestionCardSkeleton = () => (
-  <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow space-y-4">
+  <div className="bg-white p-6 rounded-lg shadow space-y-4">
     <Skeleton className="h-5 w-1/4" />
     <Skeleton className="h-6 w-full" />
     <Skeleton className="h-6 w-5/6" />
