@@ -91,7 +91,7 @@ const SortableQuestion = ({ question, onEdit, onDelete, isDeleting }) => {
 const AdminTests = () => {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
-  const { showModal } = useModal();
+  const { showModal, modal } = useModal();
 
   const [tests, setTests] = useState([]);
   const [questions, setQuestions] = useState([]);
@@ -122,9 +122,20 @@ const AdminTests = () => {
     title: '',
     description: '',
     duration: 60,
-    totalMarks: 100,
-    passingMarks: 40
+    passingScore: 50,
+    negativeMarking: false,
+    negativeMarkingValue: 0,
+    maxAttempts: 1
   });
+
+  const fetchTests = async () => {
+    try {
+      const res = await API.get('/tests');
+      setTests(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   useEffect(() => {
     fetchTests();
