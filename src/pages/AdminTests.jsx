@@ -105,8 +105,15 @@ const AdminTests = () => {
   const [isDeletingTest, setIsDeletingTest] = useState(null);
   const [isSavingQuestion, setIsSavingQuestion] = useState(false);
   const [isSavingTest, setIsSavingTest] = useState(false);
-  const [togglingTestStatus, setTogglingTestStatus] = useState(null);
-  const [togglingShowResults, setTogglingShowResults] = useState(null);
+   const [togglingTestStatus, setTogglingTestStatus] = useState(null);
+   const [togglingShowResults, setTogglingShowResults] = useState(null);
+
+   const sensors = useSensors(
+     useSensor(PointerSensor),
+     useSensor(KeyboardSensor, {
+       coordinateGetter: sortableKeyboardCoordinates,
+     })
+   );
 
   const [questionForm, setQuestionForm] = useState({
     questionText: '',
