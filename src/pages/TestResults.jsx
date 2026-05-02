@@ -67,7 +67,12 @@ const TestResults = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <h1 className="text-3xl font-bold text-gray-900">Test Results</h1>
-            <a href="/dashboard" className="text-indigo-600 hover:text-indigo-900">Back to Dashboard</a>
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition-colors "
+            >
+              Back to Dashboard
+            </button>
           </div>
         </div>
       </header>
@@ -79,24 +84,35 @@ const TestResults = () => {
           </div>
         ) : (
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">My Test Results</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">
+              My Test Results
+            </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {testSummaries.map(summary => (
+              {testSummaries.map((summary) => (
                 <div
                   key={summary.testId}
                   className="bg-white p-6 rounded-lg shadow card-hover cursor-pointer"
                   onClick={() => navigate(`/results/${summary.testId}`)}
                 >
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">{summary.testName}</h3>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    {summary.testName}
+                  </h3>
                   <div className="space-y-2 text-sm text-gray-600">
                     <p>Attempts: {summary.attemptsCount}</p>
-                    <p>Best Score: <span className={`font-medium ${
-                      summary.bestScore >= summary.totalMarks * 0.8 ? 'text-green-600' :
-                      summary.bestScore >= summary.totalMarks * 0.6 ? 'text-yellow-600' :
-                      'text-red-600'
-                    }`}>
-                      {summary.bestScore}/{summary.totalMarks} points
-                    </span></p>
+                    <p>
+                      Best Score:{" "}
+                      <span
+                        className={`font-medium ${
+                          summary.bestScore >= summary.totalMarks * 0.8
+                            ? "text-green-600"
+                            : summary.bestScore >= summary.totalMarks * 0.6
+                              ? "text-yellow-600"
+                              : "text-red-600"
+                        }`}
+                      >
+                        {summary.bestScore}/{summary.totalMarks} points
+                      </span>
+                    </p>
                     <p>Last Attempt: {summary.latestAttemptDate}</p>
                   </div>
                   <div className="mt-4 text-indigo-600 font-medium">
