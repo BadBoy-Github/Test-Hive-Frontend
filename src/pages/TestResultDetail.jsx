@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import API from '../utils/api';
 import Loader from '../components/Loader';
+import Confetti from '../components/Confetti';
+import ImageZoomModal from '../components/ImageZoomModal';
 
 const TestResultDetail = () => {
   const { testId } = useParams();
@@ -10,22 +12,33 @@ const TestResultDetail = () => {
   const { user, loading: authLoading } = useContext(AuthContext);
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [zoomedImage, setZoomedImage] = useState(null);
+  const [showConfetti, setShowConfetti] = useState(false);
 
-  const fetchResults = async () => {
-    try {
-      const res = await API.get('/attempts/results');
+   const fetchResults = async () => {
+     try {
+       const res = await API.get('/attempts/results');
 
-      // Filter results for this specific test and sort by date
-      const testResults = res.data
-        .filter(result => result.testId._id === testId)
-        .sort((a, b) => new Date(a.endTime) - new Date(b.endTime));
-      setResults(testResults);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+       // Filter results for this specific test and sort by date
+       const testResults = res.data
+         .filter(result => result.testId._id === testId)
+         .sort((a, b) => new Date(a.endTime) - new Date(b.endTime));
+       setResults(testResults);
+
+       // Check for first-attempt pass (show confetti)
+       if (testResults.length > 0) {
+         const firstAttempt = testResults[0];
+         const passingScore = testResults[0].testId.passingScore || 50;
+         if (firstAttempt.score >= passingScore && firstAttempt.attemptNumber === 1) {
+           setShowConfetti(true);
+         }
+       }
+     } catch (err) {
+       console.error(err);
+     } finally {
+       setLoading(false);
+     }
+   };
 
   useEffect(() => {
     if (user) {
@@ -81,7 +94,13 @@ const TestResultDetail = () => {
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-2xl font-bold text-indigo-600">{result.score} points</p>
+                  <p className={`text-2xl font-bold ${
+                    result.score >= result.testId.totalMarks * 0.8 ? 'text-green-600' :
+                    result.score >= result.testId.totalMarks * 0.6 ? 'text-yellow-600' :
+                    'text-red-600'
+                  }`}>
+                    {result.score}/{result.testId.totalMarks} points
+                  </p>
                   <p className="text-sm text-gray-500">
                     Time taken: {result.totalTime ? `${Math.floor(result.totalTime)}:${Math.round((result.totalTime % 1) * 60).toString().padStart(2, '0')}` : 'N/A'}
                   </p>
@@ -106,11 +125,14 @@ const TestResultDetail = () => {
                                     Question {index + 1}: {question.questionText}
                                   </h4>
                                   {question.imageUrl && (
-                                    <div className="mt-2 mb-3">
+                                    <div
+                                      className="mt-2 mb-3 cursor-zoom-in"
+                                      onClick={() => setZoomedImage(question.imageUrl)}
+                                    >
                                       <img
                                         src={question.imageUrl}
                                         alt="Question image"
-                                        className="max-w-md max-h-64 object-contain border rounded shadow-sm"
+                                        className="max-w-md max-h-64 object-contain border rounded shadow-sm hover:shadow-md transition-shadow"
                                         onError={(e) => {
                                           e.target.style.display = 'none';
                                         }}
@@ -235,6 +257,12 @@ const TestResultDetail = () => {
           ))}
         </div>
       </main>
+      <Confetti trigger={showConfetti} duration={3000} />
+      <ImageZoomModal
+        imageUrl={zoomedImage}
+        isOpen={!!zoomedImage}
+        onClose={() => setZoomedImage(null)}
+      />
     </div>
   );
 };

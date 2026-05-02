@@ -15,27 +15,28 @@ const TestResults = () => {
       const res = await API.get('/attempts/results');
 
       // Group results by test and create summaries
-      const testMap = {};
-      res.data.forEach(result => {
-        const testId = result.testId._id;
-        if (!testMap[testId]) {
-          testMap[testId] = {
-            testId: testId,
-            testName: result.testId.title,
-            attempts: [],
-            bestScore: 0,
-            latestAttemptDate: null
-          };
-        }
+        const testMap = {};
+        res.data.forEach(result => {
+          const testId = result.testId._id;
+          if (!testMap[testId]) {
+            testMap[testId] = {
+              testId: testId,
+              testName: result.testId.title,
+              totalMarks: result.testId.totalMarks,
+              attempts: [],
+              bestScore: 0,
+              latestAttemptDate: null
+            };
+          }
 
-        testMap[testId].attempts.push(result);
-        testMap[testId].bestScore = Math.max(testMap[testId].bestScore, result.score);
+          testMap[testId].attempts.push(result);
+          testMap[testId].bestScore = Math.max(testMap[testId].bestScore, result.score);
 
-        const attemptDate = new Date(result.endTime);
-        if (!testMap[testId].latestAttemptDate || attemptDate > testMap[testId].latestAttemptDate) {
-          testMap[testId].latestAttemptDate = attemptDate;
-        }
-      });
+          const attemptDate = new Date(result.endTime);
+          if (!testMap[testId].latestAttemptDate || attemptDate > testMap[testId].latestAttemptDate) {
+            testMap[testId].latestAttemptDate = attemptDate;
+          }
+        });
 
       const summaries = Object.values(testMap).map(summary => ({
         ...summary,
@@ -83,13 +84,19 @@ const TestResults = () => {
               {testSummaries.map(summary => (
                 <div
                   key={summary.testId}
-                  className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer"
+                  className="bg-white p-6 rounded-lg shadow card-hover cursor-pointer"
                   onClick={() => navigate(`/results/${summary.testId}`)}
                 >
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">{summary.testName}</h3>
                   <div className="space-y-2 text-sm text-gray-600">
                     <p>Attempts: {summary.attemptsCount}</p>
-                    <p>Best Score: {summary.bestScore} points</p>
+                    <p>Best Score: <span className={`font-medium ${
+                      summary.bestScore >= summary.totalMarks * 0.8 ? 'text-green-600' :
+                      summary.bestScore >= summary.totalMarks * 0.6 ? 'text-yellow-600' :
+                      'text-red-600'
+                    }`}>
+                      {summary.bestScore}/{summary.totalMarks} points
+                    </span></p>
                     <p>Last Attempt: {summary.latestAttemptDate}</p>
                   </div>
                   <div className="mt-4 text-indigo-600 font-medium">

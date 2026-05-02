@@ -5,6 +5,7 @@ import { useModal } from '../components/Modal';
 import { AuthContext } from '../context/AuthContext';
 import NotAuthorized from './NotAuthorized';
 import Loader from '../components/Loader';
+import Avatar from '../components/Avatar';
 
 const AdminStudents = () => {
   const { user } = useContext(AuthContext);
@@ -165,15 +166,18 @@ const AdminStudents = () => {
                 <p className="text-gray-500">No students registered yet.</p>
               ) : (
                 students.map(student => (
-                <div key={student._id} className="border border-gray-200 rounded p-4">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-semibold text-gray-900">{student.name}</h3>
-                      <p className="text-sm text-gray-600">{student.email}</p>
-                      <p className="text-sm text-gray-500">{student.phone}</p>
-                      <p className="text-xs text-gray-400">Joined: {new Date(student.createdAt).toLocaleDateString()}</p>
-                    </div>
-                    <div className="flex space-x-2">
+                  <div key={student._id} className="border border-gray-200 rounded p-4 hover:shadow-md transition-shadow">
+                    <div className="flex justify-between items-start">
+                      <div className="flex items-start space-x-3">
+                        <Avatar name={student.name} size="md" />
+                        <div>
+                          <h3 className="font-semibold text-gray-900">{student.name}</h3>
+                          <p className="text-sm text-gray-600">{student.email}</p>
+                          <p className="text-sm text-gray-500">{student.phone}</p>
+                          <p className="text-xs text-gray-400">Joined: {new Date(student.createdAt).toLocaleDateString()}</p>
+                        </div>
+                      </div>
+                      <div className="flex space-x-2">
                       <button
                         onClick={() => startEditingStudent(student)}
                         className="px-3 py-1 text-xs bg-yellow-500 text-white rounded hover:bg-yellow-600"

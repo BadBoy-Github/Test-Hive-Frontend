@@ -2,8 +2,10 @@ import { useContext, useEffect, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import API from '../utils/api';
-import { FaPlus, FaList, FaChartBar, FaUsers, FaPoll } from 'react-icons/fa';
+import { FaPlus, FaList, FaChartBar, FaUsers, FaPoll, FaTrophy } from 'react-icons/fa';
 import Loader from '../components/Loader';
+import StudyStreak from '../components/StudyStreak';
+import EmptyState from '../components/EmptyState';
 
 const Dashboard = () => {
   const { user, logout, getSessionTimeRemaining, loading } = useContext(AuthContext);
@@ -21,7 +23,6 @@ const Dashboard = () => {
 
       setTests(testsRes.data);
 
-      // Create a map of testId -> attempt count
       const attemptsMap = {};
       attemptsRes.data.forEach(result => {
         const testId = result.testId._id;
@@ -40,7 +41,6 @@ const Dashboard = () => {
     if (!loading && !user) navigate('/login');
     if (!loading && user) fetchTests();
 
-    // Update session time every second
     const updateSessionTime = () => {
       const remaining = getSessionTimeRemaining();
       setSessionTime(remaining);
@@ -53,20 +53,20 @@ const Dashboard = () => {
   }, [user, loading, navigate, getSessionTimeRemaining]);
 
   if (loading) return <Loader />;
-  if (!user) return null; // Will redirect to login
+  if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <header className="bg-white dark:bg-gray-800 shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
-            <h1 className="text-3xl font-bold text-gray-900">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
               Test Hive Dashboard
             </h1>
             <div className="flex items-center space-x-4">
-              <span className="text-gray-700">Welcome, {user.name}</span>
+              <span className="text-gray-700 dark:text-gray-300">Welcome, {user.name}</span>
               {sessionTime && (
-                <span className="text-sm text-gray-500">
+                <span className="text-sm text-gray-500 dark:text-gray-400">
                   Session expires in: {sessionTime.hours}:
                   {sessionTime.minutes.toString().padStart(2, "0")}:
                   {sessionTime.seconds.toString().padStart(2, "0")}
@@ -74,7 +74,7 @@ const Dashboard = () => {
               )}
               <button
                 onClick={logout}
-                className="text-indigo-600 hover:text-indigo-900"
+                className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400"
               >
                 Logout
               </button>
@@ -86,64 +86,64 @@ const Dashboard = () => {
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         {user.role === "admin" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white p-6 rounded-lg shadow">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow card-hover">
               <FaPlus className="text-3xl text-indigo-600 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900">Create Test</h3>
-              <p className="text-gray-500">Add new tests and questions</p>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white">Create Test</h3>
+              <p className="text-gray-500 dark:text-gray-400">Add new tests and questions</p>
               <button
                 onClick={() => navigate("/admin/create-test")}
-                className="mt-4 bg-indigo-600 text-white px-4 py-2 rounded"
+                className="mt-4 btn-gradient-primary"
               >
                 Create
               </button>
             </div>
-            <div className="bg-white p-6 rounded-lg shadow">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow card-hover">
               <FaList className="text-3xl text-green-600 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white">
                 Manage Tests
               </h3>
-              <p className="text-gray-500">Edit and view existing tests</p>
+              <p className="text-gray-500 dark:text-gray-400">Edit and view existing tests</p>
               <button
                 onClick={() => navigate("/admin/tests")}
-                className="mt-4 bg-green-600 text-white px-4 py-2 rounded"
+                className="mt-4 btn-gradient-primary"
               >
                 Manage
               </button>
             </div>
 
-            <div className="bg-white p-6 rounded-lg shadow">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow card-hover">
               <FaUsers className="text-3xl text-purple-600 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white">
                 View Students
               </h3>
-              <p className="text-gray-500">Manage student details</p>
+              <p className="text-gray-500 dark:text-gray-400">Manage student details</p>
               <button
                 onClick={() => navigate("/admin/students")}
-                className="mt-4 bg-purple-600 text-white px-4 py-2 rounded"
+                className="mt-4 btn-gradient-primary"
               >
                 View
               </button>
             </div>
-            <div className="bg-white p-6 rounded-lg shadow">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow card-hover">
               <FaPoll className="text-3xl text-blue-600 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white">
                 Test Results
               </h3>
-              <p className="text-gray-500">View test results and statistics</p>
+              <p className="text-gray-500 dark:text-gray-400">View test results and statistics</p>
               <button
                 onClick={() => navigate("/admin/test-results")}
-                className="mt-4 bg-blue-600 text-white px-4 py-2 rounded"
+                className="mt-4 btn-gradient-primary"
               >
                 View
               </button>
             </div>
-            <div className="bg-white p-6 rounded-lg shadow">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow card-hover">
               <FaChartBar className="text-3xl text-blue-600 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900">Analytics</h3>
-              <p className="text-gray-500">View student and test analytics</p>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white">Analytics</h3>
+              <p className="text-gray-500 dark:text-gray-400">View student and test analytics</p>
               <button
                 onClick={() => navigate("/admin/analytics")}
-                className="mt-4 bg-blue-600 text-white px-4 py-2 rounded"
+                className="mt-4 btn-gradient-primary"
               >
                 View
               </button>
@@ -151,22 +151,34 @@ const Dashboard = () => {
           </div>
         ) : (
           <div>
-            <div className="mb-6">
-              <button
-                onClick={() => navigate("/results")}
-                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-              >
-                View My Results
-              </button>
+            <div className="mb-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+              <div>
+                <button
+                  onClick={() => navigate("/results")}
+                  className="btn-gradient-primary mr-4"
+                >
+                  View My Results
+                </button>
+                <button
+                  onClick={() => navigate("/leaderboard")}
+                  className="btn-gradient-primary"
+                >
+                  <FaTrophy className="inline mr-1" />
+                  Leaderboard
+                </button>
+              </div>
+              <StudyStreak />
             </div>
 
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
               Available Tests
             </h2>
             {tests.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-gray-500">No tests available yet.</p>
-              </div>
+              <EmptyState 
+                title="No tests available" 
+                description="Check back later for new tests." 
+                icon={FaPoll}
+              />
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {tests.map((test) => {
@@ -176,16 +188,16 @@ const Dashboard = () => {
                 return (
                   <div
                     key={test._id}
-                    className="bg-white p-6 rounded-lg shadow"
+                    className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow card-hover"
                   >
-                    <h3 className="text-xl font-semibold text-gray-900">
+                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
                       {test.title}
                     </h3>
-                    <p className="text-gray-600 mt-2">{test.description}</p>
-                    <p className="text-sm text-gray-500 mt-2">
+                    <p className="text-gray-600 dark:text-gray-300 mt-2">{test.description}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
                       Duration: {test.duration} minutes
                     </p>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
                       Attempts: {userAttemptCount}/{test.maxAttempts}
                     </p>
                     {hasCompleted ? (
@@ -195,7 +207,7 @@ const Dashboard = () => {
                     ) : (
                       <button
                         onClick={() => navigate(`/test/${test._id}`)}
-                        className="mt-4 bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
+                        className="mt-4 btn-gradient-primary w-full"
                       >
                         Start Test
                       </button>

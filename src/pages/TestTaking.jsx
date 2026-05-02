@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import API from '../utils/api';
 import { useModal } from '../components/Modal';
 import Loader from '../components/Loader';
+import Confetti from '../components/Confetti';
+import ImageZoomModal from '../components/ImageZoomModal';
 
 const TestTaking = () => {
   const { testId } = useParams();
@@ -18,6 +20,18 @@ const TestTaking = () => {
   const [tabSwitches, setTabSwitches] = useState(0);
   const [submittedQuestions, setSubmittedQuestions] = useState(new Set());
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [flaggedQuestions, setFlaggedQuestions] = useState(new Set());
+  const [zoomedImage, setZoomedImage] = useState(null);
+  const [showConfetti, setShowConfetti] = useState(false);
+
+  const shuffleArray = (array) => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
 
   const fetchTest = async () => {
     try {
@@ -28,7 +42,29 @@ const TestTaking = () => {
       setTimeLeft(testRes.data.duration * 60);
 
       const questionsRes = await API.get(`/tests/${testId}/questions`);
-      setQuestions(questionsRes.data);
+      let fetchedQuestions = questionsRes.data;
+
+      if (testRes.data.randomizeQuestions) {
+        fetchedQuestions = shuffleArray(fetchedQuestions);
+      }
+
+      fetchedQuestions = fetchedQuestions.map(q => {
+        if (q.type === 'mcq' || q.type === 'checkbox') {
+          const optionsWithCorrect = q.options.map(opt => ({
+            option: opt,
+            isCorrect: (q.correctAnswer || []).includes(opt)
+          }));
+          const shuffledOptions = shuffleArray(optionsWithCorrect);
+          return {
+            ...q,
+            options: shuffledOptions.map(item => item.option),
+            correctAnswer: shuffledOptions.filter(item => item.isCorrect).map(item => item.option)
+          };
+        }
+        return q;
+      });
+
+      setQuestions(fetchedQuestions);
 
       const attemptRes = await API.post(`/attempts/${testId}/start`);
       setAttemptId(attemptRes.data._id);
@@ -76,7 +112,7 @@ const TestTaking = () => {
     await API.post(`/attempts/${attemptId}/answer`, {
       questionId,
       userAnswer: answer,
-      timeTaken: 0 // Calculate properly
+      timeTaken: 0
     });
     setSubmittedQuestions(prev => new Set([...prev, questionId]));
   };
@@ -95,7 +131,6 @@ const TestTaking = () => {
 
     setIsSubmitting(true);
     try {
-      // Submit all pending answers
       for (const question of questions) {
         const qId = question._id;
         if (answers[qId] !== undefined && !submittedQuestions.has(qId)) {
@@ -103,7 +138,13 @@ const TestTaking = () => {
         }
       }
 
-      await API.post(`/attempts/${attemptId}/complete`);
+      const result = await API.post(`/attempts/${attemptId}/complete`);
+      
+      if (result.data.passed || result.data.isFirstAttempt) {
+        setShowConfetti(true);
+        setTimeout(() => setShowConfetti(false), 3000);
+      }
+      
       showModal({
         title: 'Test Submitted',
         message: 'Your test has been submitted successfully!',
@@ -138,7 +179,6 @@ const TestTaking = () => {
     }
   }, [timeLeft, test, attemptId]);
 
-  // Anti-cheat measures
   const MAX_TAB_SWITCHES = 3;
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -200,93 +240,242 @@ const TestTaking = () => {
 
   const prevQuestion = () => {
     if (currentQuestion > 0) {
+      submitAnswer(questions[currentQuestion]._id);
       setCurrentQuestion(currentQuestion - 1);
     }
+  };
+
+  const goToQuestion = (index) => {
+    if (index !== currentQuestion) {
+      submitAnswer(questions[currentQuestion]._id);
+      setCurrentQuestion(index);
+    }
+  };
+
+  const toggleFlag = (e) => {
+    e.stopPropagation();
+    const qId = questions[currentQuestion]._id;
+    setFlaggedQuestions(prev => {
+      const next = new Set(prev);
+      if (next.has(qId)) {
+        next.delete(qId);
+      } else {
+        next.add(qId);
+      }
+      return next;
+    });
+  };
+
+  const getQuestionStatus = (index) => {
+    const q = questions[index];
+    const isAnswered = answers[q._id] !== undefined;
+    const isFlagged = flaggedQuestions.has(q._id);
+    if (index === currentQuestion) return 'current';
+    if (isFlagged) return 'flagged';
+    if (isAnswered) return 'answered';
+    return 'unanswered';
   };
 
   if (loading || !test || questions.length === 0) return <Loader message="Loading test..." />;
 
   const question = questions[currentQuestion];
 
+  const getQuestionStatusClass = (index) => {
+    const status = getQuestionStatus(index);
+    const baseClass = "w-8 h-8 flex items-center justify-center rounded-full text-sm font-medium cursor-pointer transition-all ";
+    if (status === 'current') return baseClass + 'bg-indigo-600 text-white ring-2 ring-indigo-600 ring-offset-2';
+    if (status === 'answered') return baseClass + 'bg-green-100 text-green-800 hover:bg-green-200';
+    if (status === 'flagged') return baseClass + 'bg-orange-100 text-orange-800 hover:bg-orange-200';
+    return baseClass + 'bg-gray-100 text-gray-600 hover:bg-gray-200';
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow p-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <header className="bg-white dark:bg-gray-800 shadow p-4">
         <div className="flex justify-between items-center">
-          <h1 className="text-xl font-bold">{test.title}</h1>
-          <div className="text-lg">Time Left: {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}</div>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">{test.title}</h1>
+          <div className="flex items-center space-x-4">
+            <div className="text-lg font-mono text-gray-700 dark:text-gray-300">
+              Time Left: {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
+            </div>
+            <button
+              onClick={toggleFlag}
+              className={`px-3 py-1 rounded text-sm font-medium border ${
+                flaggedQuestions.has(questions[currentQuestion]?._id)
+                  ? 'bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-900 dark:text-orange-300'
+                  : 'bg-gray-100 text-gray-700 border-gray-300 dark:bg-gray-700 dark:text-gray-300'
+              }`}
+            >
+              {flaggedQuestions.has(questions[currentQuestion]?._id) ? '🚩 Flagged' : '🚩 Flag'}
+            </button>
+          </div>
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto p-6">
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-lg font-semibold mb-4">Question {currentQuestion + 1} of {questions.length}</h2>
-          <p className="mb-4">{question.questionText}</p>
+      <main className="max-w-7xl mx-auto p-6">
+        <div className="flex gap-6">
+          <div className="flex-1">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Question {currentQuestion + 1} of {questions.length}
+                </h2>
+                <span className={`px-2 py-1 rounded text-xs font-medium ${
+                  question.marks === 1 ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+                }`}>
+                  {question.marks} mark{question.marks !== 1 ? 's' : ''}
+                </span>
+              </div>
 
-          {(question.type === 'mcq' || question.type === 'checkbox') && (
-            <div className="space-y-2">
-              {question.options.map((option, index) => (
-                <label key={index} className="flex items-center">
-                  <input
-                    type={question.type === 'mcq' ? 'radio' : 'checkbox'}
-                    name={question.type === 'mcq' ? 'answer' : `answer-${index}`}
-                    value={option}
-                    checked={
-                      question.type === 'mcq'
-                        ? answers[question._id] === option
-                        : (answers[question._id] || []).includes(option)
-                    }
-                    onChange={() => handleAnswer(question._id, option, question.type === 'checkbox')}
-                    className="mr-2"
+              <p className="mb-4 text-lg text-gray-800 dark:text-gray-200">{question.questionText}</p>
+
+              {question.imageUrl && (
+                <div className="mb-6">
+                  <img
+                    src={question.imageUrl}
+                    alt="Question"
+                    className="max-w-md max-h-80 object-contain border rounded-lg shadow-sm cursor-zoom-in hover:shadow-md transition-shadow"
+                    onClick={() => setZoomedImage(question.imageUrl)}
+                    onError={(e) => { e.target.style.display = 'none'; }}
                   />
-                  {String.fromCharCode(65 + index)}. {option}
-                </label>
-              ))}
+                </div>
+              )}
+
+              {(question.type === 'mcq' || question.type === 'checkbox') && question.options && (
+                <div className="space-y-2 mb-6">
+                  {question.options.map((option, index) => {
+                    const isSelected = question.type === 'mcq'
+                      ? answers[question._id] === option
+                      : (answers[question._id] || []).includes(option);
+                    return (
+                      <label
+                        key={index}
+                        className={`flex items-center p-3 rounded-lg border cursor-pointer transition-all ${
+                          isSelected
+                            ? 'bg-indigo-50 border-indigo-500 dark:bg-indigo-900 dark:border-indigo-400'
+                            : 'bg-gray-50 border-gray-200 dark:bg-gray-700 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600'
+                        }`}
+                      >
+                        <input
+                          type={question.type === 'mcq' ? 'radio' : 'checkbox'}
+                          name={question.type === 'mcq' ? 'answer' : `answer-${index}`}
+                          value={option}
+                          checked={isSelected}
+                          onChange={() => handleAnswer(question._id, option, question.type === 'checkbox')}
+                          className="mr-3 h-4 w-4"
+                        />
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          {String.fromCharCode(65 + index)}. {option}
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
+
+              {question.type === 'descriptive' && (
+                <textarea
+                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  rows="6"
+                  value={answers[question._id] || ''}
+                  onChange={(e) => handleAnswer(question._id, e.target.value)}
+                  placeholder="Enter your answer here..."
+                />
+              )}
+
+              {question.type === 'coding' && (
+                <textarea
+                  className="w-full p-3 border rounded-lg font-mono text-sm focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  rows="12"
+                  value={answers[question._id] || ''}
+                  onChange={(e) => handleAnswer(question._id, e.target.value)}
+                  placeholder="Write your code here..."
+                />
+              )}
+
+              <div className="flex justify-between mt-6">
+                <button
+                  onClick={prevQuestion}
+                  disabled={currentQuestion === 0}
+                  className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                {currentQuestion < questions.length - 1 ? (
+                  <button
+                    onClick={nextQuestion}
+                    className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
+                  >
+                    Next
+                  </button>
+                ) : (
+                  <button
+                    onClick={submitTest}
+                    disabled={isSubmitting}
+                    className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:bg-green-400 flex items-center space-x-2"
+                  >
+                    {isSubmitting && (
+                      <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    )}
+                    <span>{isSubmitting ? 'Submitting...' : 'Submit Test'}</span>
+                  </button>
+                )}
+              </div>
             </div>
-          )}
+          </div>
 
-          {question.type === 'descriptive' && (
-            <textarea
-              className="w-full p-2 border rounded"
-              rows="4"
-              value={answers[question._id] || ''}
-              onChange={(e) => handleAnswer(question._id, e.target.value)}
-              placeholder="Enter your answer"
-            />
-          )}
+          <div className="w-64 hidden lg:block">
+            <div className="sticky top-6 bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                Question Navigation
+              </h3>
+              <div className="grid grid-cols-5 gap-2">
+                {questions.map((q, index) => (
+                  <button
+                    key={q._id}
+                    onClick={() => goToQuestion(index)}
+                    className={getQuestionStatusClass(index)}
+                    title={`Question ${index + 1}${getQuestionStatus(index) === 'flagged' ? ' (flagged)' : ''}`}
+                  >
+                    {index + 1}
+                  </button>
+                ))}
+              </div>
 
-          {question.type === 'coding' && (
-            <textarea
-              className="w-full p-2 border rounded font-mono text-sm"
-              rows="12"
-              value={answers[question._id] || ''}
-              onChange={(e) => handleAnswer(question._id, e.target.value)}
-              placeholder="Write your code here..."
-            />
-          )}
+              <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <div className="space-y-2 text-xs">
+                  <div className="flex items-center space-x-2">
+                    <span className="w-4 h-4 rounded-full bg-indigo-600"></span>
+                    <span className="text-gray-600 dark:text-gray-400">Current</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="w-4 h-4 rounded-full bg-green-100 text-green-800 border border-green-300 flex items-center justify-center text-[10px]">✓</span>
+                    <span className="text-gray-600 dark:text-gray-400">Answered</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="w-4 h-4 rounded-full bg-orange-100 text-orange-800 border border-orange-300 flex items-center justify-center text-[10px]">🚩</span>
+                    <span className="text-gray-600 dark:text-gray-400">Flagged</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="w-4 h-4 rounded-full bg-gray-100 text-gray-600 border border-gray-300 flex items-center justify-center text-[10px]">-</span>
+                    <span className="text-gray-600 dark:text-gray-400">Not Answered</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-
-         <div className="flex justify-between mt-6">
-           <button onClick={prevQuestion} disabled={currentQuestion === 0} className="bg-gray-500 text-white px-4 py-2 rounded">Previous</button>
-           {currentQuestion < questions.length - 1 ? (
-             <button onClick={nextQuestion} className="bg-indigo-600 text-white px-4 py-2 rounded">Next</button>
-           ) : (
-             <button
-               onClick={submitTest}
-               disabled={isSubmitting}
-               className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:bg-green-400 flex items-center space-x-2"
-             >
-               {isSubmitting && (
-                 <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                 </svg>
-               )}
-               <span>{isSubmitting ? 'Submitting...' : 'Submit Test'}</span>
-             </button>
-           )}
-         </div>
       </main>
-      {modal}
+
+      <Confetti trigger={showConfetti} duration={3000} />
+      <ImageZoomModal
+        imageUrl={zoomedImage}
+        isOpen={!!zoomedImage}
+        onClose={() => setZoomedImage(null)}
+      />
     </div>
   );
 };

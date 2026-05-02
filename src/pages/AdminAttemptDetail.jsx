@@ -4,6 +4,7 @@ import { AuthContext } from '../context/AuthContext';
 import API from '../utils/api';
 import NotAuthorized from './NotAuthorized';
 import Loader from '../components/Loader';
+import ImageZoomModal from '../components/ImageZoomModal';
 
 const AdminAttemptDetail = () => {
   const { attemptId } = useParams();
@@ -11,6 +12,7 @@ const AdminAttemptDetail = () => {
   const { user } = useContext(AuthContext);
   const [attempt, setAttempt] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [zoomedImage, setZoomedImage] = useState(null);
 
   const fetchAttempt = async () => {
     try {
@@ -80,18 +82,21 @@ const AdminAttemptDetail = () => {
                              <h4 className="text-lg font-semibold text-gray-900">
                                Question {index + 1}: {question.questionText}
                              </h4>
-                             {question.imageUrl && (
-                               <div className="mt-2 mb-3">
-                                 <img
-                                   src={question.imageUrl}
-                                   alt="Question image"
-                                   className="max-w-md max-h-64 object-contain border rounded shadow-sm"
-                                   onError={(e) => {
-                                     e.target.style.display = 'none';
-                                   }}
-                                 />
-                               </div>
-                             )}
+                              {question.imageUrl && (
+                                <div
+                                  className="mt-2 mb-3 cursor-zoom-in"
+                                  onClick={() => setZoomedImage(question.imageUrl)}
+                                >
+                                  <img
+                                    src={question.imageUrl}
+                                    alt="Question image"
+                                    className="max-w-md max-h-64 object-contain border rounded shadow-sm hover:shadow-md transition-shadow"
+                                    onError={(e) => {
+                                      e.target.style.display = 'none';
+                                    }}
+                                  />
+                                </div>
+                              )}
                              <p className="text-sm text-gray-500">
                                {question.type.toUpperCase()} • {question.marks} mark{question.marks !== 1 ? 's' : ''}
                              </p>
@@ -208,6 +213,11 @@ const AdminAttemptDetail = () => {
           )}
         </div>
       </main>
+      <ImageZoomModal
+        imageUrl={zoomedImage}
+        isOpen={!!zoomedImage}
+        onClose={() => setZoomedImage(null)}
+      />
     </div>
   );
 };

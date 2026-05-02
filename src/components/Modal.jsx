@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNotification } from '../context/NotificationContext';
 
 const Modal = ({
   isOpen,

@@ -81,19 +81,7 @@ const SortableQuestion = ({ question, onEdit, onDelete, isDeleting }) => {
             className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
           >
             Edit
-          </button>
-          <button
-            onClick={() => onDelete(question._id)}
-            disabled={isDeleting === question._id}
-            className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center"
-          >
-            {isDeleting === question._id ? (
-              <svg className="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-            ) : 'Delete'}
-          </button>
+                  </button>
         </div>
       </div>
     </div>
@@ -103,27 +91,27 @@ const SortableQuestion = ({ question, onEdit, onDelete, isDeleting }) => {
 const AdminTests = () => {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
-  const { modal, showModal } = useModal();
+  const { showModal } = useModal();
 
-  // All hooks must be called before any conditional logic
   const [tests, setTests] = useState([]);
-  const [selectedTest, setSelectedTest] = useState(null);
   const [questions, setQuestions] = useState([]);
+  const [selectedTest, setSelectedTest] = useState(null);
   const [showQuestions, setShowQuestions] = useState(false);
-  const [editingQuestion, setEditingQuestion] = useState(null);
   const [showQuestionForm, setShowQuestionForm] = useState(false);
+  const [editingQuestion, setEditingQuestion] = useState(null);
   const [editingTest, setEditingTest] = useState(null);
   const [showTestForm, setShowTestForm] = useState(false);
-  const [isSavingQuestion, setIsSavingQuestion] = useState(false);
   const [isDeletingQuestion, setIsDeletingQuestion] = useState(null);
-  const [isSavingTest, setIsSavingTest] = useState(false);
   const [isDeletingTest, setIsDeletingTest] = useState(null);
+  const [isSavingQuestion, setIsSavingQuestion] = useState(false);
+  const [isSavingTest, setIsSavingTest] = useState(false);
   const [togglingTestStatus, setTogglingTestStatus] = useState(null);
   const [togglingShowResults, setTogglingShowResults] = useState(null);
+
   const [questionForm, setQuestionForm] = useState({
     questionText: '',
     type: 'mcq',
-    options: [''],
+    options: ['', '', '', ''],
     correctAnswer: [],
     marks: 1,
     explanation: '',
@@ -134,34 +122,16 @@ const AdminTests = () => {
     title: '',
     description: '',
     duration: 60,
-    passingScore: 50,
-    negativeMarking: false,
-    negativeMarkingValue: 0,
-    maxAttempts: 1
+    totalMarks: 100,
+    passingMarks: 40
   });
 
-    const fetchTests = async () => {
-     try {
-       const res = await API.get('/admin/tests');
-       setTests(res.data);
-     } catch (err) {
-       console.error(err);
-     }
-   };
+  useEffect(() => {
+    fetchTests();
+  }, []);
 
-   const sensors = useSensors(
-     useSensor(PointerSensor),
-     useSensor(KeyboardSensor, {
-       coordinateGetter: sortableKeyboardCoordinates,
-     })
-   );
-
-   useEffect(() => {
-     fetchTests();
-   }, []);
-
-   if (!user || user.role !== 'admin') {
-     return <NotAuthorized />;
+  if (!user || user.role !== 'admin') {
+    return <NotAuthorized />;
    }
 
   const fetchQuestions = async (testId) => {
@@ -488,9 +458,9 @@ const AdminTests = () => {
           <div className="flex justify-between items-center py-6">
             <h1 className="text-3xl font-bold text-gray-900">Test Management</h1>
             <div className="flex space-x-4">
-              <button onClick={() => navigate('/admin/create-test')} className="bg-indigo-600 text-white px-4 py-2 rounded">Create Test</button>
-              <button onClick={() => navigate('/admin/analytics')} className="bg-green-600 text-white px-4 py-2 rounded">Analytics</button>
-              <button onClick={() => navigate('/dashboard')} className="bg-gray-600 text-white px-4 py-2 rounded">Back to Dashboard</button>
+              <button onClick={() => navigate('/admin/create-test')} className="btn-gradient-primary mr-2">Create Test</button>
+              <button onClick={() => navigate('/admin/analytics')} className="btn-gradient-success mr-2">Analytics</button>
+              <button onClick={() => navigate('/dashboard')} className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition-colors">Back to Dashboard</button>
             </div>
           </div>
         </div>
@@ -745,8 +715,6 @@ const AdminTests = () => {
                     Cancel Edit
                   </button>
                 )}
-              </div>
-
               {/* Existing Questions */}
               <div className="mb-6">
                 <h3 className="font-semibold text-gray-900 mb-2">
@@ -782,21 +750,22 @@ const AdminTests = () => {
               {/* Question Form */}
               {showQuestionForm && (
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">
+                  <h3 className="font-semibold text-gray-900 mb-4">
                     {editingQuestion ? 'Edit Question' : 'Add New Question'}
                   </h3>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Question Text</label>
-                    <textarea
-                      name="questionText"
-                      value={questionForm.questionText}
-                      onChange={handleQuestionFormChange}
-                      rows={3}
-                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
-                      placeholder="Enter your question here..."
-                    />
-                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Question Text</label>
+                      <textarea
+                        name="questionText"
+                        value={questionForm.questionText}
+                        onChange={handleQuestionFormChange}
+                        rows={3}
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
+                        placeholder="Enter your question here..."
+                      />
+                    </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Question Image URL (Optional)</label>
@@ -821,13 +790,14 @@ const AdminTests = () => {
                               message: 'Could not load image from the provided URL.',
                               type: 'confirm'
                             });
-                          }}
-                        />
-                      </div>
-                    )}
-                  </div>
+                           }}
+                         />
+                </div>
+              )}
+            </div>
 
-                  <div>
+
+                   <div>
                     <label className="block text-sm font-medium text-gray-700">Question Type</label>
                     <select
                       name="type"
@@ -967,22 +937,22 @@ const AdminTests = () => {
                       onClick={() => {
                         setShowQuestionForm(false);
                         setEditingQuestion(null);
-                        resetQuestionForm();
+resetQuestionForm();
                       }}
                       className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
                     >
                       Cancel
-                    </button>
-                  </div>
-              </div>
-              )}
-            </div>
-          )}
-        </div>
-      </main>
-      {modal}
-    </div>
-  );
-};
+</button>
+                   </div>
+                 </div>)}
+               </div>
+             </div>
+           )}
+         </div>
+       </main>
+       {modal}
+      </div>
+    );
+  };
 
 export default AdminTests;

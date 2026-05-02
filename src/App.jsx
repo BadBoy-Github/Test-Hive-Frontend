@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard';
 import TestTaking from './pages/TestTaking';
 import TestResults from './pages/TestResults';
 import TestResultDetail from './pages/TestResultDetail';
+import Leaderboard from './pages/Leaderboard';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminTests from './pages/AdminTests';
 import AdminStudents from './pages/AdminStudents';
@@ -26,6 +27,7 @@ function App() {
           <Route path="/test/:testId" element={<TestTaking />} />
           <Route path="/results" element={<TestResults />} />
           <Route path="/results/:testId" element={<TestResultDetail />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/admin/create-test" element={<AdminDashboard />} />
           <Route path="/admin/tests" element={<AdminTests />} />
           <Route path="/admin/test-results" element={<AdminTestResults />} />
