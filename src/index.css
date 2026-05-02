@@ -4,6 +4,12 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  a, Link, button {
+    cursor: pointer;
+  }
+}
+
 @layer utilities {
   .btn-gradient-primary {
     @apply bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-md hover:shadow-lg;
