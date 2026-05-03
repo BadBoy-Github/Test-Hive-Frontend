@@ -23,6 +23,7 @@ const TestTaking = () => {
   const [flaggedQuestions, setFlaggedQuestions] = useState(new Set());
   const [zoomedImage, setZoomedImage] = useState(null);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [testSubmitted, setTestSubmitted] = useState(false);
   const questionStartTimeRef = useRef(null);
   const submitTestRef = useRef(null);
   const showModalRef = useRef(showModal);
@@ -134,8 +135,31 @@ const TestTaking = () => {
       return;
     }
 
+    // Prevent multiple submissions
+    if (isSubmitting) {
+      return;
+    }
+
+    // Show confirmation dialog
+    const confirmed = await new Promise((resolve) => {
+      showModal({
+        title: 'Submit Test',
+        message: 'Are you sure you want to submit the test? You will not be able to make any more changes.',
+        onConfirm: () => resolve(true),
+        onCancel: () => resolve(false),
+        confirmText: 'Yes, Submit',
+        cancelText: 'Cancel',
+        type: 'cancel'
+      });
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
     setIsSubmitting(true);
     try {
+      // Submit all unsubmitted answers first
       for (const question of questions) {
         const qId = question._id;
         if (answers[qId] !== undefined && !submittedQuestions.has(qId)) {
@@ -143,17 +167,22 @@ const TestTaking = () => {
         }
       }
 
+      // Complete the attempt
       const result = await API.post(`/attempts/${attemptId}/complete`);
-      
+      setTestSubmitted(true);
+
       if (result.data.passed || result.data.isFirstAttempt) {
         setShowConfetti(true);
         setTimeout(() => setShowConfetti(false), 3000);
       }
-      
+
       showModal({
         title: 'Test Submitted',
         message: 'Your test has been submitted successfully!',
-        onConfirm: () => navigate('/dashboard'),
+        onConfirm: () => {
+          // Clear any timers and navigate
+          setTimeout(() => navigate('/dashboard'), 100);
+        },
         confirmText: 'OK',
         type: 'confirm'
       });
@@ -322,11 +351,12 @@ const TestTaking = () => {
             </div>
             <button
               onClick={toggleFlag}
+              disabled={testSubmitted}
               className={`px-3 py-1 rounded text-sm font-medium border ${
                 flaggedQuestions.has(questions[currentQuestion]?._id)
                   ? 'bg-orange-100 text-orange-700 border-orange-300'
                   : 'bg-gray-100 text-gray-700 border-gray-300'
-              }`}
+              } ${testSubmitted ? 'cursor-not-allowed opacity-50' : ''}`}
             >
               {flaggedQuestions.has(questions[currentQuestion]?._id) ? '🚩 Flagged' : '🚩 Flag'}
             </button>
@@ -378,14 +408,15 @@ const TestTaking = () => {
                             : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
                         }`}
                       >
-                        <input
-                          type={question.type === 'mcq' ? 'radio' : 'checkbox'}
-                          name={question.type === 'mcq' ? 'answer' : `answer-${index}`}
-                          value={option}
-                          checked={isSelected}
-                          onChange={() => handleAnswer(question._id, option, question.type === 'checkbox')}
-                          className="mr-3 h-4 w-4"
-                        />
+                         <input
+                           type={question.type === 'mcq' ? 'radio' : 'checkbox'}
+                           name={question.type === 'mcq' ? 'answer' : `answer-${index}`}
+                           value={option}
+                           checked={isSelected}
+                           onChange={() => handleAnswer(question._id, option, question.type === 'checkbox')}
+                           disabled={testSubmitted}
+                           className="mr-3 h-4 w-4"
+                         />
                         <span className="text-sm font-medium text-gray-700">
                           {String.fromCharCode(65 + index)}. {option}
                         </span>
@@ -401,6 +432,7 @@ const TestTaking = () => {
                   rows="6"
                   value={answers[question._id] || ''}
                   onChange={(e) => handleAnswer(question._id, e.target.value)}
+                  disabled={testSubmitted}
                   placeholder="Enter your answer here..."
                 />
               )}
@@ -411,6 +443,7 @@ const TestTaking = () => {
                   rows="12"
                   value={answers[question._id] || ''}
                   onChange={(e) => handleAnswer(question._id, e.target.value)}
+                  disabled={testSubmitted}
                   placeholder="Write your code here..."
                 />
               )}
@@ -418,7 +451,7 @@ const TestTaking = () => {
               <div className="flex justify-between mt-6">
                 <button
                   onClick={prevQuestion}
-                  disabled={currentQuestion === 0}
+                  disabled={currentQuestion === 0 || testSubmitted}
                   className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
                 >
                   Previous
@@ -426,25 +459,26 @@ const TestTaking = () => {
                 {currentQuestion < questions.length - 1 ? (
                   <button
                     onClick={nextQuestion}
-                    className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
+                    disabled={testSubmitted}
+                    className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
                   >
                     Next
                   </button>
                 ) : (
-                  <button
-                    onClick={submitTest}
-                    disabled={isSubmitting}
-                    className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:bg-green-400 flex items-center space-x-2"
-                  >
-                    {isSubmitting && (
-                      <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                    )}
-                    <span>{isSubmitting ? 'Submitting...' : 'Submit Test'}</span>
-                  </button>
-                )}
+                   <button
+                     onClick={submitTest}
+                     disabled={isSubmitting || testSubmitted}
+                     className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:bg-green-400 flex items-center space-x-2"
+                   >
+                     {isSubmitting && (
+                       <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                       </svg>
+                     )}
+                     <span>{isSubmitting ? 'Submitting...' : testSubmitted ? 'Test Submitted' : 'Submit Test'}</span>
+                   </button>
+                 )}
               </div>
             </div>
           </div>
@@ -459,6 +493,7 @@ const TestTaking = () => {
                   <button
                     key={q._id}
                     onClick={() => goToQuestion(index)}
+                    disabled={testSubmitted}
                     className={getQuestionStatusClass(index)}
                     title={`Question ${index + 1}${getQuestionStatus(index) === 'flagged' ? ' (flagged)' : ''}`}
                   >
