@@ -1,6 +1,6 @@
-import { useState, useContext } from 'react';
+import { useState, useContext, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { FaUser, FaLock, FaEnvelope, FaPhone } from 'react-icons/fa';
 import { useModal } from '../components/Modal';
 
@@ -21,7 +21,17 @@ const Login = () => {
   });
   const { login, register } = useContext(AuthContext);
   const navigate = useNavigate();
+  const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    // Set different titles for root path vs login path
+    if (location.pathname === '/') {
+      document.title = 'Test Hive';
+    } else {
+      document.title = 'Test Hive | Login';
+    }
+  }, [location.pathname]);
 
   const validateField = (name, value) => {
     let error = '';

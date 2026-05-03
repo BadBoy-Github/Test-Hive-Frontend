@@ -17,6 +17,10 @@ const Leaderboard = () => {
   const [isPublic, setIsPublic] = useState(true);
 
   useEffect(() => {
+    document.title = 'Test Hive | Leaderboard';
+  }, []);
+
+  useEffect(() => {
     if (user) {
       fetchData();
     }

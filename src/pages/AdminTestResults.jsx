@@ -14,6 +14,10 @@ const AdminTestResults = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    document.title = 'Test Hive | Test Results';
+  }, []);
+
+  useEffect(() => {
     if (user && user.role === 'admin') {
       fetchTests();
     } else {

@@ -53,6 +53,10 @@ const TestResults = () => {
   };
 
   useEffect(() => {
+    document.title = 'Test Hive | Results';
+  }, []);
+
+  useEffect(() => {
     if (user) {
       fetchResults();
     }

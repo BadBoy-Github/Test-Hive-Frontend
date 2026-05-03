@@ -36,6 +36,10 @@ const AdminStudents = () => {
   };
 
   useEffect(() => {
+    document.title = 'Test Hive | Students';
+  }, []);
+
+  useEffect(() => {
     fetchStudents();
   }, []);
 

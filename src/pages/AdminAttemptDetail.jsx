@@ -27,6 +27,10 @@ const AdminAttemptDetail = () => {
   };
 
   useEffect(() => {
+    document.title = 'Test Hive | Attempt Details';
+  }, []);
+
+  useEffect(() => {
     fetchAttempt();
   }, [attemptId]);
 

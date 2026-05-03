@@ -1,4 +1,4 @@
-import { useState, useContext } from 'react';
+import { useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaClipboardList, FaPoll, FaUsers } from 'react-icons/fa';
 import API from '../utils/api';
@@ -10,6 +10,10 @@ const AdminDashboard = () => {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   const { modal, showModal } = useModal();
+
+  useEffect(() => {
+    document.title = 'Test Hive | Create Test';
+  }, []);
 
   const [testData, setTestData] = useState({
     title: '',

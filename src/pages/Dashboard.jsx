@@ -38,6 +38,10 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
+    document.title = 'Test Hive | Dashboard';
+  }, []);
+
+  useEffect(() => {
     if (!loading && !user) navigate('/login');
     if (!loading && user) fetchTests();
 

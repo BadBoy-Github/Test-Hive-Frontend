@@ -236,6 +236,10 @@ const TestTaking = () => {
      fetchTest();
    }, []);
 
+   useEffect(() => {
+     document.title = 'Test Hive | Test';
+   }, []);
+
    // Track time spent on current question
    useEffect(() => {
      if (questions.length > 0) {

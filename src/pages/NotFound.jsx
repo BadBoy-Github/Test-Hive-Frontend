@@ -1,6 +1,11 @@
 import { Link } from 'react-router-dom';
+import { useEffect } from 'react';
 
 const NotFound = () => {
+  useEffect(() => {
+    document.title = 'Test Hive | Page Not Found';
+  }, []);
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="text-center">

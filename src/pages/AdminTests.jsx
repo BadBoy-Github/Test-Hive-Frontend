@@ -145,6 +145,10 @@ const AdminTests = () => {
   };
 
   useEffect(() => {
+    document.title = 'Test Hive | Manage Tests';
+  }, []);
+
+  useEffect(() => {
     fetchTests();
   }, []);
 

@@ -24,6 +24,10 @@ const AdminAnalytics = () => {
   };
 
   useEffect(() => {
+    document.title = 'Test Hive | Analytics';
+  }, []);
+
+  useEffect(() => {
     fetchAnalytics();
   }, []);
 
