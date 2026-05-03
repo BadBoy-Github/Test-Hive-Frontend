@@ -5,6 +5,7 @@ import { useModal } from '../components/Modal';
 import Loader from '../components/Loader';
 import Confetti from '../components/Confetti';
 import ImageZoomModal from '../components/ImageZoomModal';
+import logger from '../utils/logger';
 
 const TestTaking = () => {
   const { testId } = useParams();
@@ -75,7 +76,7 @@ const TestTaking = () => {
 
       setLoading(false);
     } catch (error) {
-      console.error('Failed to load test:', error.response?.data);
+      logger.error('Failed to load test', error, { responseData: error.response?.data });
       const errorMessage = error.response?.data?.message || 'Failed to load test';
 
       if (errorMessage.includes('Maximum attempts reached')) {
@@ -177,7 +178,7 @@ const TestTaking = () => {
         type: 'confirm'
       });
     } catch (error) {
-      console.error('Failed to submit test:', error);
+      logger.error('Failed to submit test', error);
       showModal({
         title: 'Submission Error',
         message: 'Failed to submit test. Your progress may not have been saved.',
@@ -219,7 +220,7 @@ const TestTaking = () => {
           type: 'confirm'
         });
     } catch (error) {
-      console.error('Failed to auto-submit test:', error);
+      logger.error('Failed to auto-submit test', error);
       showModal({
         title: 'Auto-Submission Error',
         message: 'Failed to auto-submit test. Please contact support.',
@@ -265,21 +266,21 @@ const TestTaking = () => {
         // Auto-submit when time runs out
         handleAutoSubmit();
       }
-    }, [timeLeft, test, attemptId, isSubmitting, testSubmitted]);
+    }, [timeLeft]); // Only depend on timeLeft to avoid unnecessary re-renders
 
-   const MAX_TAB_SWITCHES = 3;
-   useEffect(() => {
-     const handleVisibilityChange = () => {
-       if (document.hidden) {
-         setTabSwitches(prev => {
-           const newCount = prev + 1;
-           if (newCount > MAX_TAB_SWITCHES) {
-             submitTestRef.current?.();
-           }
-           return newCount;
-         });
-       }
-     };
+    const MAX_TAB_SWITCHES = 3;
+    useEffect(() => {
+      const handleVisibilityChange = () => {
+        if (document.hidden) {
+          setTabSwitches(prev => {
+            const newCount = prev + 1;
+            if (newCount > MAX_TAB_SWITCHES && !isSubmitting && !testSubmitted) {
+              handleAutoSubmit();
+            }
+            return newCount;
+          });
+        }
+      };
 
      const preventActions = (e) => {
        e.preventDefault();

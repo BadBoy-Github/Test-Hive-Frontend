@@ -4,6 +4,13 @@ const API = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
 });
 
+// Store navigate callback for 401 redirects
+let navigateCallback = null;
+
+export const setNavigateCallback = (callback) => {
+  navigateCallback = callback;
+};
+
 API.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
@@ -20,7 +27,12 @@ API.interceptors.response.use(
       // Token expired or invalid, clear storage and redirect
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/';
+      // Use navigate callback if available, otherwise fallback to window.location
+      if (navigateCallback && window.location.pathname !== '/') {
+        navigateCallback('/');
+      } else {
+        window.location.href = '/';
+      }
     }
     return Promise.reject(error);
   }

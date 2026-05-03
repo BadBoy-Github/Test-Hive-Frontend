@@ -166,17 +166,18 @@ const Login = () => {
               <div className="mb-4">
                 <div className="flex items-center">
                   <FaUser className="text-gray-400 mr-2" />
-                  <input
-                    id="name"
-                    name="name"
-                    type="text"
-                    className={`appearance-none rounded-none relative block w-full px-3 py-2 border placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm ${
-                      formErrors.name ? "border-red-500" : "border-gray-300"
-                    }`}
-                    placeholder="Full Name"
-                    value={formData.name}
-                    onChange={handleChange}
-                  />
+                <input
+                  id="name"
+                  name="name"
+                  type="text"
+                  className={`appearance-none rounded-none relative block w-full px-3 py-2 border placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm ${
+                    formErrors.name ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="Full Name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  autoComplete="name"
+                />
                 </div>
                 {formErrors.name && (
                   <p className="mt-1 text-sm text-red-600">{formErrors.name}</p>
@@ -190,12 +191,13 @@ const Login = () => {
                   id="email"
                   name="email"
                   type="email"
-                  className={`appearance-none rounded-none relative block w-full px-3 py-2 border placeholder-gray-500 text-gray-900 ${isLogin ? "rounded-t-md" : ""} focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm ${
-                    formErrors.email ? "border-red-500" : "border-gray-300"
+                  className={`appearance-none rounded-none relative block w-full px-3 py-2 border placeholder-gray-500 text-gray-900 ${isLogin ? 'rounded-t-md' : ''} focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm ${
+                    formErrors.email ? 'border-red-500' : 'border-gray-300'
                   }`}
                   placeholder="Email address"
                   value={formData.email}
                   onChange={handleChange}
+                  autoComplete="email"
                 />
               </div>
               {formErrors.email && (
@@ -211,11 +213,12 @@ const Login = () => {
                     name="phone"
                     type="tel"
                     className={`appearance-none rounded-none relative block w-full px-3 py-2 border placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm ${
-                      formErrors.phone ? "border-red-500" : "border-gray-300"
+                      formErrors.phone ? 'border-red-500' : 'border-gray-300'
                     }`}
                     placeholder="Phone Number"
                     value={formData.phone}
                     onChange={handleChange}
+                    autoComplete="tel"
                   />
                 </div>
                 {formErrors.phone && (
@@ -232,12 +235,13 @@ const Login = () => {
                   id="password"
                   name="password"
                   type="password"
-                  className={`appearance-none rounded-none relative block w-full px-3 py-2 border placeholder-gray-500 text-gray-900 ${isLogin ? "rounded-b-md" : "rounded-b-md"} focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm ${
-                    formErrors.password ? "border-red-500" : "border-gray-300"
+                  className={`appearance-none rounded-none relative block w-full px-3 py-2 border placeholder-gray-500 text-gray-900 ${isLogin ? 'rounded-b-md' : ''} focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm ${
+                    formErrors.password ? 'border-red-500' : 'border-gray-300'
                   }`}
                   placeholder="Password"
                   value={formData.password}
                   onChange={handleChange}
+                  autoComplete={isLogin ? "current-password" : "new-password"}
                 />
               </div>
               {formErrors.password && (

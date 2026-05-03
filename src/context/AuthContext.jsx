@@ -1,13 +1,15 @@
 import { createContext, useState, useEffect } from 'react';
 import API from '../utils/api';
+import logger from '../utils/logger';
 
 // Helper function to decode Base64URL-encoded JWT payload
 const decodeJWT = (token) => {
   try {
     const base64Url = token.split('.')[1];
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    // Add padding if needed
-    const padded = base64.padEnd(base64.length + (4 - base64.length % 4) % 4, '=');
+    // Add padding if needed (compatible with older browsers)
+    const padding = (4 - base64.length % 4) % 4;
+    const padded = base64 + '='.repeat(padding);
     return JSON.parse(atob(padded));
   } catch (error) {
     return null;
@@ -46,6 +48,7 @@ export const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [navigateCallback, setNavigateCallback] = useState(null);
 
   useEffect(() => {
     const checkTokenAndSetUser = () => {
@@ -75,14 +78,8 @@ export const AuthProvider = ({ children }) => {
     const interval = setInterval(() => {
       const token = localStorage.getItem('token');
       if (token && isTokenExpired(token)) {
-        console.log('Token expired, logging out...');
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        setUser(null);
-        // Redirect to login page
-        if (window.location.pathname !== '/') {
-          window.location.href = '/';
-        }
+        logger.info('Token expired, logging out...');
+        logout();
       }
     }, 60000); // Check every minute
 
@@ -109,6 +106,10 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);
+    // Navigate to login page if callback is available
+    if (navigateCallback && window.location.pathname !== '/') {
+      navigateCallback('/');
+    }
   };
 
   const getSessionTimeRemaining = () => {
@@ -131,7 +132,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, loading, getSessionTimeRemaining }}>
+    <AuthContext.Provider value={{ user, login, register, logout, loading, getSessionTimeRemaining, setNavigateCallback }}>
       {children}
     </AuthContext.Provider>
   );
