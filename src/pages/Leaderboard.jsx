@@ -168,7 +168,7 @@ const Leaderboard = () => {
                                 : "text-red-600"
                           }`}
                         >
-                          {Math.round(entry.averageScore)}%
+                          {Math.round(entry.averageScore)}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-gray-600">

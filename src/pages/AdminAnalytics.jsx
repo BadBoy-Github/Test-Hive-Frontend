@@ -137,7 +137,7 @@ const AdminAnalytics = () => {
                   </div>
                   <div className="text-right">
                     <p className="text-2xl font-bold text-indigo-600">
-                      {student.averageScore.toFixed(1)}%
+                      {student.averageScore.toFixed(1)}
                     </p>
                     <p className="text-sm text-gray-500">
                       {student.totalAttempts} attempts

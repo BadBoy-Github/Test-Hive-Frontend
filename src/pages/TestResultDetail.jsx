@@ -28,7 +28,8 @@ const TestResultDetail = () => {
         // Check for first-attempt pass (show confetti)
         if (testResults.length > 0) {
           const firstAttempt = testResults[0];
-          const passingScore = testResults[0].testId.passingScore || 50;
+          const passingScorePercentage = testResults[0].testId.passingScore || 50;
+          const passingScore = (testResults[0].testId.totalMarks * passingScorePercentage) / 100;
           if (firstAttempt.score >= passingScore && firstAttempt.isFirstAttempt) {
             setShowConfetti(true);
           }
