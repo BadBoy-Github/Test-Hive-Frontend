@@ -9,7 +9,7 @@ import ImageZoomModal from '../components/ImageZoomModal';
 const TestTaking = () => {
   const { testId } = useParams();
   const navigate = useNavigate();
-  const { modal, showModal } = useModal();
+  const { modal, showModal, confirm } = useModal();
   const [test, setTest] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -141,17 +141,7 @@ const TestTaking = () => {
     }
 
     // Show confirmation dialog
-    const confirmed = await new Promise((resolve) => {
-      showModal({
-        title: 'Submit Test',
-        message: 'Are you sure you want to submit the test? You will not be able to make any more changes.',
-        onConfirm: () => resolve(true),
-        onCancel: () => resolve(false),
-        confirmText: 'Yes, Submit',
-        cancelText: 'Cancel',
-        type: 'cancel'
-      });
-    });
+    const confirmed = await confirm('Are you sure you want to submit the test? You will not be able to make any more changes.', 'Submit Test');
 
     if (!confirmed) {
       return;
@@ -200,6 +190,53 @@ const TestTaking = () => {
     }
   };
 
+  const handleAutoSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      // Submit all unsubmitted answers first
+      for (const question of questions) {
+        const qId = question._id;
+        if (answers[qId] !== undefined && !submittedQuestions.has(qId)) {
+          await submitAnswer(qId);
+        }
+      }
+
+      // Complete the attempt
+      const result = await API.post(`/attempts/${attemptId}/complete`);
+      setTestSubmitted(true);
+
+      if (result.data.passed || result.data.isFirstAttempt) {
+        setShowConfetti(true);
+        setTimeout(() => setShowConfetti(false), 3000);
+      }
+
+      // Navigate to dashboard immediately
+      navigate('/dashboard');
+
+      // Show auto-submit notification after 2 seconds
+      setTimeout(() => {
+        showModal({
+          title: 'Test Auto-Submitted',
+          message: 'Your test was automatically submitted because the time limit was reached.',
+          onConfirm: () => {},
+          confirmText: 'OK',
+          type: 'confirm'
+        });
+      }, 2000);
+    } catch (error) {
+      console.error('Failed to auto-submit test:', error);
+      showModal({
+        title: 'Auto-Submission Error',
+        message: 'Failed to auto-submit test. Please contact support.',
+        onConfirm: () => navigate('/dashboard'),
+        confirmText: 'OK',
+        type: 'confirm'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
    useEffect(() => {
      fetchTest();
    }, []);
@@ -221,14 +258,15 @@ const TestTaking = () => {
       showModalRef.current = showModal;
     });
 
-   useEffect(() => {
-     if (timeLeft > 0) {
-       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-       return () => clearTimeout(timer);
-     } else if (timeLeft === 0 && test && attemptId) {
-       submitTestRef.current?.();
-     }
-   }, [timeLeft, test, attemptId]);
+    useEffect(() => {
+      if (timeLeft > 0) {
+        const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
+        return () => clearTimeout(timer);
+      } else if (timeLeft === 0 && test && attemptId && !isSubmitting && !testSubmitted) {
+        // Auto-submit when time runs out
+        handleAutoSubmit();
+      }
+    }, [timeLeft, test, attemptId, isSubmitting, testSubmitted]);
 
    const MAX_TAB_SWITCHES = 3;
    useEffect(() => {
@@ -533,6 +571,7 @@ const TestTaking = () => {
         isOpen={!!zoomedImage}
         onClose={() => setZoomedImage(null)}
       />
+      {modal}
     </div>
   );
 };

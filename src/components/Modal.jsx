@@ -7,6 +7,7 @@ const Modal = ({
   title,
   message,
   onConfirm,
+  onCancel,
   confirmText = 'OK',
   cancelText = 'Cancel',
   type = 'info',
@@ -73,7 +74,12 @@ const Modal = ({
           {onConfirm && (
             <>
               <button
-                onClick={onClose}
+                onClick={() => {
+                  if (onCancel) {
+                    onCancel();
+                  }
+                  onClose();
+                }}
                 className={`px-4 py-2 rounded ${getButtonStyles('cancel')}`}
               >
                 {cancelText}
@@ -107,6 +113,7 @@ export const useModal = () => {
     title: '',
     message: '',
     onConfirm: null,
+    onCancel: null,
     confirmText: 'OK',
     cancelText: 'Cancel',
     type: 'info',
@@ -121,6 +128,7 @@ export const useModal = () => {
       title: config.title || 'Alert',
       message: config.message || '',
       onConfirm: config.onConfirm || null,
+      onCancel: config.onCancel || null,
       confirmText: config.confirmText || 'OK',
       cancelText: config.cancelText || 'Cancel',
       type: config.type || 'info',
@@ -148,6 +156,7 @@ export const useModal = () => {
         title,
         message,
         onConfirm: () => resolve(true),
+        onCancel: () => resolve(false),
         cancelText: 'Cancel',
         confirmText: 'OK',
         type: 'confirm'
