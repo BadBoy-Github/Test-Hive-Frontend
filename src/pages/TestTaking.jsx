@@ -210,19 +210,14 @@ const TestTaking = () => {
         setTimeout(() => setShowConfetti(false), 3000);
       }
 
-      // Navigate to dashboard immediately
-      navigate('/dashboard');
-
-      // Show auto-submit notification after 2 seconds
-      setTimeout(() => {
+        // Show auto-submit notification immediately
         showModal({
           title: 'Test Auto-Submitted',
-          message: 'Your test was automatically submitted because the time limit was reached.',
-          onConfirm: () => {},
+          message: 'Your test is autosubmitted.',
+          onConfirm: () => navigate('/dashboard'),
           confirmText: 'OK',
           type: 'confirm'
         });
-      }, 2000);
     } catch (error) {
       console.error('Failed to auto-submit test:', error);
       showModal({
