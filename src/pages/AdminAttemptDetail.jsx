@@ -122,17 +122,11 @@ const AdminAttemptDetail = () => {
                                 const isCorrectOption = question.correctAnswer && question.correctAnswer.includes(option);
                                 const isUserAnswer = answer.userAnswer && (Array.isArray(answer.userAnswer) ? answer.userAnswer.includes(option) : answer.userAnswer === option);
                                 
-                                return (
-                                  <div
-                                    key={optIndex}
-                                    className={`p-3 rounded-md border ${
-                                      isCorrectOption
-                                        ? 'bg-green-50 border-green-200'
-                                        : isUserAnswer && !isCorrectOption
-                                        ? 'bg-red-50 border-red-200'
-                                        : 'bg-gray-50 border-gray-200'
-                                    }`}
-                                  >
+                   return (
+                     <div
+                       key={question._id}
+                       className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden"
+                     >
                                     <div className="flex items-start justify-between">
                                       <div className="flex items-start space-x-3">
                                         <span className="text-sm font-medium text-gray-600 w-6">

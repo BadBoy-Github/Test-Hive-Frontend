@@ -151,7 +151,7 @@ const TestResultDetail = () => {
 
                       return (
                         <div
-                          key={answer._id}
+                          key={question._id}
                           className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden"
                         >
                           {/* Question Header */}
