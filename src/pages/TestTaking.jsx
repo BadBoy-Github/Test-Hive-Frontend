@@ -441,26 +441,38 @@ const TestTaking = () => {
      }
    };
 
-  const nextQuestion = () => {
-    if (currentQuestion < questions.length - 1) {
-      submitAnswer(questions[currentQuestion]._id);
-      setCurrentQuestion(currentQuestion + 1);
-    }
-  };
+   const handleAnswer = (questionId, answer, isCheckbox = false) => {
+     if (isCheckbox) {
+       const currentAnswers = answers[questionId] || [];
+       const newAnswers = currentAnswers.includes(answer)
+         ? currentAnswers.filter(a => a !== answer)
+         : [...currentAnswers, answer];
+       setAnswers({ ...answers, [questionId]: newAnswers });
+     } else {
+       setAnswers({ ...answers, [questionId]: answer });
+     }
+   };
 
-  const prevQuestion = () => {
-    if (currentQuestion > 0) {
-      submitAnswer(questions[currentQuestion]._id);
-      setCurrentQuestion(currentQuestion - 1);
-    }
-  };
+   const nextQuestion = () => {
+     if (currentQuestion < questions.length - 1) {
+       submitAnswer(questions[currentQuestion]._id);
+       setCurrentQuestion(currentQuestion + 1);
+     }
+   };
 
-  const goToQuestion = (index) => {
-    if (index !== currentQuestion) {
-      submitAnswer(questions[currentQuestion]._id);
-      setCurrentQuestion(index);
-    }
-  };
+   const prevQuestion = () => {
+     if (currentQuestion > 0) {
+       submitAnswer(questions[currentQuestion]._id);
+       setCurrentQuestion(currentQuestion - 1);
+     }
+   };
+
+   const goToQuestion = (index) => {
+     if (index !== currentQuestion) {
+       submitAnswer(questions[currentQuestion]._id);
+       setCurrentQuestion(index);
+     }
+   };
 
   const toggleFlag = (e) => {
     e.stopPropagation();
