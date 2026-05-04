@@ -7,6 +7,45 @@ import Confetti from '../components/Confetti';
 import ImageZoomModal from '../components/ImageZoomModal';
 import logger from '../utils/logger';
 
+const TEST_STORAGE_KEY_PREFIX = 'testHive_test_';
+const TEST_STORAGE_EXPIRY = 60 * 60 * 1000; // 1 hour in ms
+
+const getStorageKey = (testId, attemptId) => `${TEST_STORAGE_KEY_PREFIX}${testId}_${attemptId}`;
+
+const getStoredState = (key) => {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const { data, expiry } = JSON.parse(raw);
+    if (Date.now() > expiry) {
+      localStorage.removeItem(key);
+      return null;
+    }
+    return data;
+  } catch {
+    return null;
+  }
+};
+
+const setStoredState = (key, data) => {
+  try {
+    localStorage.setItem(key, JSON.stringify({
+      data,
+      expiry: Date.now() + TEST_STORAGE_EXPIRY
+    }));
+  } catch (e) {
+    console.warn('Failed to save test state to localStorage:', e);
+  }
+};
+
+const clearStoredState = (key) => {
+  try {
+    localStorage.removeItem(key);
+  } catch (e) {
+    console.warn('Failed to clear test state from localStorage:', e);
+  }
+};
+
 const TestTaking = () => {
   const { testId } = useParams();
   const navigate = useNavigate();
@@ -25,9 +64,12 @@ const TestTaking = () => {
   const [zoomedImage, setZoomedImage] = useState(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const [testSubmitted, setTestSubmitted] = useState(false);
+  const [isRestored, setIsRestored] = useState(false);
   const questionStartTimeRef = useRef(null);
   const submitTestRef = useRef(null);
   const showModalRef = useRef(showModal);
+  const storageKeyRef = useRef(null);
+  const timerIntervalRef = useRef(null);
 
   const shuffleArray = (array) => {
     const shuffled = [...array];
@@ -38,79 +80,104 @@ const TestTaking = () => {
     return shuffled;
   };
 
-  const fetchTest = async () => {
-    try {
-      setLoading(true);
+   const fetchTest = async () => {
+     try {
+       setLoading(true);
 
-      const testRes = await API.get(`/tests/${testId}`);
-      setTest(testRes.data);
-      setTimeLeft(testRes.data.duration * 60);
+       const testRes = await API.get(`/tests/${testId}`);
+       setTest(testRes.data);
 
-      const questionsRes = await API.get(`/tests/${testId}/questions`);
-      let fetchedQuestions = questionsRes.data;
+       // Check for saved state in localStorage
+       const savedAttemptId = attemptId || localStorage.getItem(`testHive_currentAttempt_${testId}`);
+       let savedState = null;
+       if (savedAttemptId) {
+         storageKeyRef.current = getStorageKey(testId, savedAttemptId);
+         savedState = getStoredState(storageKeyRef.current);
+       }
 
-      if (testRes.data.randomizeQuestions) {
-        fetchedQuestions = shuffleArray(fetchedQuestions);
-      }
+       let questionsRes = await API.get(`/tests/${testId}/questions`);
+       let fetchedQuestions = questionsRes.data;
 
-      fetchedQuestions = fetchedQuestions.map(q => {
-        if (q.type === 'mcq' || q.type === 'checkbox') {
-          const optionsWithCorrect = q.options.map(opt => ({
-            option: opt,
-            isCorrect: (q.correctAnswer || []).includes(opt)
-          }));
-          const shuffledOptions = shuffleArray(optionsWithCorrect);
-          return {
-            ...q,
-            options: shuffledOptions.map(item => item.option),
-            correctAnswer: shuffledOptions.filter(item => item.isCorrect).map(item => item.option)
-          };
-        }
-        return q;
-      });
+       if (testRes.data.randomizeQuestions) {
+         fetchedQuestions = shuffleArray(fetchedQuestions);
+       }
 
-      setQuestions(fetchedQuestions);
+       fetchedQuestions = fetchedQuestions.map(q => {
+         if (q.type === 'mcq' || q.type === 'checkbox') {
+           const optionsWithCorrect = q.options.map(opt => ({
+             option: opt,
+             isCorrect: (q.correctAnswer || []).includes(opt)
+           }));
+           const shuffledOptions = shuffleArray(optionsWithCorrect);
+           return {
+             ...q,
+             options: shuffledOptions.map(item => item.option),
+             correctAnswer: shuffledOptions.filter(item => item.isCorrect).map(item => item.option)
+           };
+         }
+         return q;
+       });
 
-      const attemptRes = await API.post(`/attempts/${testId}/start`);
-      setAttemptId(attemptRes.data._id);
+       setQuestions(fetchedQuestions);
 
-      setLoading(false);
-    } catch (error) {
-      logger.error('Failed to load test', error, { responseData: error.response?.data });
-      const errorMessage = error.response?.data?.message || 'Failed to load test';
+       // Start or resume attempt
+       let currentAttemptId = savedAttemptId;
+       if (!currentAttemptId) {
+         const attemptRes = await API.post(`/attempts/${testId}/start`);
+         currentAttemptId = attemptRes.data._id;
+         localStorage.setItem(`testHive_currentAttempt_${testId}`, currentAttemptId);
+       }
+       setAttemptId(currentAttemptId);
+       storageKeyRef.current = getStorageKey(testId, currentAttemptId);
 
-      if (errorMessage.includes('Maximum attempts reached')) {
-        showModal({
-          title: 'Maximum Attempts Reached',
-          message: `You have reached the maximum number of attempts (${error.response?.data?.maxAttempts || 'allowed'}) for this test.`,
-          onConfirm: () => navigate('/dashboard'),
-          confirmText: 'OK',
-          type: 'confirm'
-        });
-        return;
-      } else if (errorMessage.includes('not currently available')) {
-        showModal({
-          title: 'Test Unavailable',
-          message: 'This test is not currently available.',
-          onConfirm: () => navigate('/dashboard'),
-          confirmText: 'OK',
-          type: 'confirm'
-        });
-        return;
-      }
+       // Restore saved answers and timer if available and not expired
+       if (savedState) {
+         setAnswers(savedState.answers || {});
+         setFlaggedQuestions(new Set(savedState.flaggedQuestions || []));
+         setSubmittedQuestions(new Set(savedState.submittedQuestions || []));
+         setTimeLeft(savedState.timeLeft || testRes.data.duration * 60);
+         setIsRestored(true);
+       } else {
+         setTimeLeft(testRes.data.duration * 60);
+       }
 
-      showModal({
-        title: 'Error',
-        message: errorMessage,
-        onConfirm: () => navigate('/dashboard'),
-        confirmText: 'OK',
-        type: 'confirm'
-      });
-      navigate('/dashboard');
-    } finally {
-      setLoading(false);
-    }
-  };
+       setLoading(false);
+     } catch (error) {
+       logger.error('Failed to load test', error, { responseData: error.response?.data });
+       const errorMessage = error.response?.data?.message || 'Failed to load test';
+
+       if (errorMessage.includes('Maximum attempts reached')) {
+         showModal({
+           title: 'Maximum Attempts Reached',
+           message: `You have reached the maximum number of attempts (${error.response?.data?.maxAttempts || 'allowed'}) for this test.`,
+           onConfirm: () => navigate('/dashboard'),
+           confirmText: 'OK',
+           type: 'confirm'
+         });
+         return;
+       } else if (errorMessage.includes('not currently available')) {
+         showModal({
+           title: 'Test Unavailable',
+           message: 'This test is not currently available.',
+           onConfirm: () => navigate('/dashboard'),
+           confirmText: 'OK',
+           type: 'confirm'
+         });
+         return;
+       }
+
+       showModal({
+         title: 'Error',
+         message: errorMessage,
+         onConfirm: () => navigate('/dashboard'),
+         confirmText: 'OK',
+         type: 'confirm'
+       });
+       navigate('/dashboard');
+     } finally {
+       setLoading(false);
+     }
+   };
 
   const submitAnswer = async (questionId) => {
     const answer = answers[questionId];
@@ -124,114 +191,119 @@ const TestTaking = () => {
     setSubmittedQuestions(prev => new Set([...prev, questionId]));
   };
 
-  const submitTest = async () => {
-    if (!attemptId) {
-      showModal({
-        title: 'Error',
-        message: 'Test session not properly initialized. Please try again.',
-        onConfirm: () => navigate('/dashboard'),
-        confirmText: 'OK',
-        type: 'confirm'
-      });
-      return;
-    }
+   const submitTest = async () => {
+     if (!attemptId) {
+       showModal({
+         title: 'Error',
+         message: 'Test session not properly initialized. Please try again.',
+         onConfirm: () => navigate('/dashboard'),
+         confirmText: 'OK',
+         type: 'confirm'
+       });
+       return;
+     }
 
-    // Prevent multiple submissions
-    if (isSubmitting) {
-      return;
-    }
+     if (isSubmitting) {
+       return;
+     }
 
-    // Show confirmation dialog
-    const confirmed = await confirm('Are you sure you want to submit the test? You will not be able to make any more changes.', 'Submit Test');
+     const confirmed = await confirm('Are you sure you want to submit the test? You will not be able to make any more changes.', 'Submit Test');
 
-    if (!confirmed) {
-      return;
-    }
+     if (!confirmed) {
+       return;
+     }
 
-    setIsSubmitting(true);
-    try {
-      // Submit all unsubmitted answers first
-      for (const question of questions) {
-        const qId = question._id;
-        if (answers[qId] !== undefined && !submittedQuestions.has(qId)) {
-          await submitAnswer(qId);
-        }
-      }
+     setIsSubmitting(true);
+     try {
+       for (const question of questions) {
+         const qId = question._id;
+         if (answers[qId] !== undefined && !submittedQuestions.has(qId)) {
+           await submitAnswer(qId);
+         }
+       }
 
-      // Complete the attempt
-      const result = await API.post(`/attempts/${attemptId}/complete`);
-      setTestSubmitted(true);
+       const result = await API.post(`/attempts/${attemptId}/complete`);
+       setTestSubmitted(true);
 
-      if (result.data.passed || result.data.isFirstAttempt) {
-        setShowConfetti(true);
-        setTimeout(() => setShowConfetti(false), 3000);
-      }
+       // Clear persisted state
+       if (storageKeyRef.current) {
+         clearStoredState(storageKeyRef.current);
+       }
+       localStorage.removeItem(`testHive_currentAttempt_${testId}`);
 
-      showModal({
-        title: 'Test Submitted',
-        message: 'Your test has been submitted successfully!',
-        onConfirm: () => {
-          // Clear any timers and navigate
-          setTimeout(() => navigate('/dashboard'), 100);
-        },
-        confirmText: 'OK',
-        type: 'confirm'
-      });
-    } catch (error) {
-      logger.error('Failed to submit test', error);
-      showModal({
-        title: 'Submission Error',
-        message: 'Failed to submit test. Your progress may not have been saved.',
-        onConfirm: () => navigate('/dashboard'),
-        confirmText: 'OK',
-        type: 'confirm'
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+       if (result.data.passed || result.data.isFirstAttempt) {
+         setShowConfetti(true);
+         setTimeout(() => setShowConfetti(false), 3000);
+       }
 
-  const handleAutoSubmit = async () => {
-    setIsSubmitting(true);
-    try {
-      // Submit all unsubmitted answers first
-      for (const question of questions) {
-        const qId = question._id;
-        if (answers[qId] !== undefined && !submittedQuestions.has(qId)) {
-          await submitAnswer(qId);
-        }
-      }
+       showModal({
+         title: 'Test Submitted',
+         message: 'Your test has been submitted successfully!',
+         onConfirm: () => {
+           setTimeout(() => navigate('/dashboard'), 100);
+         },
+         confirmText: 'OK',
+         type: 'confirm'
+       });
+     } catch (error) {
+       logger.error('Failed to submit test', error);
+       showModal({
+         title: 'Submission Error',
+         message: 'Failed to submit test. Your progress may not have been saved.',
+         onConfirm: () => navigate('/dashboard'),
+         confirmText: 'OK',
+         type: 'confirm'
+       });
+     } finally {
+       setIsSubmitting(false);
+     }
+   };
 
-      // Complete the attempt
-      const result = await API.post(`/attempts/${attemptId}/complete`);
-      setTestSubmitted(true);
+   const handleAutoSubmit = async () => {
+     setIsSubmitting(true);
+     try {
+       for (const question of questions) {
+         const qId = question._id;
+         if (answers[qId] !== undefined && !submittedQuestions.has(qId)) {
+           await submitAnswer(qId);
+         }
+       }
 
-      if (result.data.passed || result.data.isFirstAttempt) {
-        setShowConfetti(true);
-        setTimeout(() => setShowConfetti(false), 3000);
-      }
+       const result = await API.post(`/attempts/${attemptId}/complete`);
+       setTestSubmitted(true);
 
-        // Show auto-submit notification immediately
-        showModal({
-          title: 'Test Auto-Submitted',
-          message: 'Your test is autosubmitted.',
-          onConfirm: () => navigate('/dashboard'),
-          confirmText: 'OK',
-          type: 'confirm'
-        });
-    } catch (error) {
-      logger.error('Failed to auto-submit test', error);
-      showModal({
-        title: 'Auto-Submission Error',
-        message: 'Failed to auto-submit test. Please contact support.',
-        onConfirm: () => navigate('/dashboard'),
-        confirmText: 'OK',
-        type: 'confirm'
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+       // Clear persisted state
+       if (storageKeyRef.current) {
+         clearStoredState(storageKeyRef.current);
+       }
+       localStorage.removeItem(`testHive_currentAttempt_${testId}`);
+
+       if (result.data.passed || result.data.isFirstAttempt) {
+         setShowConfetti(true);
+         setTimeout(() => setShowConfetti(false), 3000);
+       }
+
+         // Show auto-submit notification immediately
+         showModal({
+           title: 'Test Auto-Submitted',
+           message: 'Your test is autosubmitted.',
+           onConfirm: () => navigate('/dashboard'),
+           confirmText: 'OK',
+           type: 'confirm'
+         });
+     } catch (error) {
+       logger.error('Failed to auto-submit test', error);
+       showModal({
+         title: 'Auto-Submission Error',
+         message: 'Failed to auto-submit test. Please contact support.',
+         onConfirm: () => navigate('/dashboard'),
+         confirmText: 'OK',
+         type: 'confirm'
+       });
+     } finally {
+       setIsSubmitting(false);
+     }
+   };
 
    useEffect(() => {
      fetchTest();
@@ -258,15 +330,45 @@ const TestTaking = () => {
       showModalRef.current = showModal;
     });
 
-    useEffect(() => {
-      if (timeLeft > 0) {
-        const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-        return () => clearTimeout(timer);
-      } else if (timeLeft === 0 && test && attemptId && !isSubmitting && !testSubmitted) {
-        // Auto-submit when time runs out
-        handleAutoSubmit();
-      }
-    }, [timeLeft]); // Only depend on timeLeft to avoid unnecessary re-renders
+     // Persist test state to localStorage every second (timer + answers + flagged)
+     useEffect(() => {
+       if (!storageKeyRef.current || !attemptId || testSubmitted) return;
+
+       const persist = () => {
+         setStoredState(storageKeyRef.current, {
+           answers,
+           flaggedQuestions: Array.from(flaggedQuestions),
+           submittedQuestions: Array.from(submittedQuestions),
+           timeLeft,
+           restoredAt: Date.now()
+         });
+       };
+
+       // Save immediately
+       persist();
+
+       // Set up interval to save every second
+       timerIntervalRef.current = setInterval(persist, 1000);
+
+       return () => {
+         if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+        };
+      }, [answers, flaggedQuestions, submittedQuestions, timeLeft, attemptId, testSubmitted]);
+
+     // Timer countdown
+     useEffect(() => {
+       if (timeLeft <= 0 || testSubmitted) return;
+
+       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
+       return () => clearTimeout(timer);
+     }, [timeLeft, testSubmitted]);
+
+     // Auto-submit when time runs out
+     useEffect(() => {
+       if (timeLeft === 0 && test && attemptId && !isSubmitting && !testSubmitted && !loading) {
+         handleAutoSubmit();
+       }
+     }, [timeLeft, test, attemptId, isSubmitting, testSubmitted, loading]);
 
     const MAX_TAB_SWITCHES = 3;
     useEffect(() => {
@@ -308,18 +410,36 @@ const TestTaking = () => {
      };
    }, []); // Run once on mount
 
-  const handleAnswer = (questionId, answer, isCheckbox = false) => {
-    console.log(answer);
-    if (isCheckbox) {
-      const currentAnswers = answers[questionId] || [];
-      const newAnswers = currentAnswers.includes(answer)
-        ? currentAnswers.filter(a => a !== answer)
-        : [...currentAnswers, answer];
-      setAnswers({ ...answers, [questionId]: newAnswers });
-    } else {
-      setAnswers({ ...answers, [questionId]: answer });
-    }
-  };
+   const clearResponse = async (questionId) => {
+     // Clear local state
+     setAnswers(prev => {
+       const updated = { ...prev };
+       delete updated[questionId];
+       return updated;
+     });
+
+     // Remove from submitted set so it can be re-submitted if answered again
+     setSubmittedQuestions(prev => {
+       const next = new Set(prev);
+       next.delete(questionId);
+       return next;
+     });
+
+     // If already submitted to backend, submit an empty answer to overwrite
+     if (submittedQuestions.has(questionId) && attemptId) {
+       const question = questions.find(q => q._id === questionId);
+       const emptyAnswer = question?.type === 'checkbox' ? [] : '';
+       try {
+         await API.post(`/attempts/${attemptId}/answer`, {
+           questionId,
+           userAnswer: emptyAnswer,
+           timeTaken: 0
+         });
+       } catch (err) {
+         console.error('Failed to clear answer on backend:', err);
+       }
+     }
+   };
 
   const nextQuestion = () => {
     if (currentQuestion < questions.length - 1) {
@@ -407,16 +527,37 @@ const TestTaking = () => {
         <div className="flex gap-6">
           <div className="flex-1">
             <div className="bg-white p-6 rounded-lg shadow">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">
-                  Question {currentQuestion + 1} of {questions.length}
-                </h2>
-                <span className={`px-2 py-1 rounded text-xs font-medium ${
-                  question.marks === 1 ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'
-                }`}>
-                  {question.marks} mark{question.marks !== 1 ? 's' : ''}
-                </span>
-              </div>
+               <div className="flex justify-between items-center mb-4">
+                 <h2 className="text-lg font-semibold text-gray-900">
+                   Question {currentQuestion + 1} of {questions.length}
+                 </h2>
+                 <div className="flex items-center gap-2">
+                   <button
+                     onClick={(e) => {
+                       e.stopPropagation();
+                       clearResponse(question._id);
+                     }}
+                     disabled={testSubmitted}
+                     className={`px-2 py-1 rounded text-xs font-medium border transition-colors ${
+                       question.type === 'checkbox'
+                         ? (answers[question._id] || []).length > 0
+                           ? 'bg-gray-800 text-white border-gray-800 hover:bg-gray-900'
+                           : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200'
+                         : answers[question._id]
+                           ? 'bg-gray-800 text-white border-gray-800 hover:bg-gray-900'
+                           : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200'
+                     } ${testSubmitted ? 'cursor-not-allowed opacity-50' : ''}`}
+                     title="Clear response"
+                   >
+                     Clear
+                   </button>
+                   <span className={`px-2 py-1 rounded text-xs font-medium ${
+                     question.marks === 1 ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'
+                   }`}>
+                     {question.marks} mark{question.marks !== 1 ? 's' : ''}
+                   </span>
+                 </div>
+               </div>
 
                <p className="mb-4 text-lg text-gray-800 break-words whitespace-normal">{question.questionText}</p>
 
