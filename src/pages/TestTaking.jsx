@@ -309,6 +309,7 @@ const TestTaking = () => {
    }, []); // Run once on mount
 
   const handleAnswer = (questionId, answer, isCheckbox = false) => {
+    console.log(answer);
     if (isCheckbox) {
       const currentAnswers = answers[questionId] || [];
       const newAnswers = currentAnswers.includes(answer)
@@ -417,7 +418,7 @@ const TestTaking = () => {
                 </span>
               </div>
 
-              <p className="mb-4 text-lg text-gray-800">{question.questionText}</p>
+               <p className="mb-4 text-lg text-gray-800 break-words whitespace-normal">{question.questionText}</p>
 
               {question.imageUrl && (
                 <div className="mb-6">
@@ -431,38 +432,38 @@ const TestTaking = () => {
                 </div>
               )}
 
-              {(question.type === 'mcq' || question.type === 'checkbox') && question.options && (
-                <div className="space-y-2 mb-6">
-                  {question.options.map((option, index) => {
-                    const isSelected = question.type === 'mcq'
-                      ? answers[question._id] === option
-                      : (answers[question._id] || []).includes(option);
-                    return (
-                      <label
-                        key={index}
-                        className={`flex items-center p-3 rounded-lg border cursor-pointer transition-all ${
-                          isSelected
-                            ? 'bg-indigo-50 border-indigo-500'
-                            : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
-                        }`}
-                      >
-                         <input
-                           type={question.type === 'mcq' ? 'radio' : 'checkbox'}
-                           name={question.type === 'mcq' ? 'answer' : `answer-${index}`}
-                           value={option}
-                           checked={isSelected}
-                           onChange={() => handleAnswer(question._id, option, question.type === 'checkbox')}
-                           disabled={testSubmitted}
-                           className="mr-3 h-4 w-4"
-                         />
-                        <span className="text-sm font-medium text-gray-700">
-                          {String.fromCharCode(65 + index)}. {option}
-                        </span>
-                      </label>
-                    );
-                  })}
-                </div>
-              )}
+               {(question.type === 'mcq' || question.type === 'checkbox') && question.options && (
+                 <div className="space-y-2 mb-6">
+                   {question.options.map((option, index) => {
+                     const isSelected = question.type === 'mcq'
+                       ? answers[question._id] === option
+                       : (answers[question._id] || []).includes(option);
+                     return (
+                       <label
+                         key={index}
+                         className={`flex items-start p-3 rounded-lg border cursor-pointer transition-all ${
+                           isSelected
+                             ? 'bg-indigo-50 border-indigo-500'
+                             : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                         }`}
+                       >
+                          <input
+                            type={question.type === 'mcq' ? 'radio' : 'checkbox'}
+                            name={question.type === 'mcq' ? 'answer' : `answer-${index}`}
+                            value={option}
+                            checked={isSelected}
+                            onChange={() => handleAnswer(question._id, option, question.type === 'checkbox')}
+                            disabled={testSubmitted}
+                            className="mr-3 h-4 w-4 mt-0.5 flex-shrink-0"
+                          />
+                         <span className="text-sm font-medium text-gray-700 break-words whitespace-normal flex-1 min-w-0">
+                           {String.fromCharCode(65 + index)}. {option}
+                         </span>
+                       </label>
+                     );
+                   })}
+                 </div>
+               )}
 
               {question.type === 'descriptive' && (
                 <textarea

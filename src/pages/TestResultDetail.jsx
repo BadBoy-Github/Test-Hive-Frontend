@@ -158,7 +158,7 @@ const TestResultDetail = () => {
                           <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
                             <div className="flex justify-between items-start">
                               <div className="flex-1">
-                                <h4 className="text-lg font-semibold text-gray-900">
+                                <h4 className="text-lg font-semibold text-gray-900 break-words whitespace-normal">
                                   Question {index + 1}: {question.questionText}
                                 </h4>
                                 {question.imageUrl && (
@@ -228,19 +228,17 @@ const TestResultDetail = () => {
                                                   : "bg-gray-50 border-gray-200"
                                             }`}
                                           >
-                                            <div className="flex items-start justify-between">
-                                              <div className="flex items-start space-x-3">
-                                                <span className="text-sm font-medium text-gray-600 w-6">
-                                                  {String.fromCharCode(
-                                                    65 + optIndex,
-                                                  )}
-                                                  .
-                                                </span>
-                                                <span className="text-gray-800">
-                                                  {option}
-                                                </span>
-                                              </div>
-                                              <div className="flex items-center space-x-2">
+                                            <div className="flex items-start gap-3">
+                                              <span className="text-sm font-medium text-gray-600 w-6 flex-shrink-0">
+                                                {String.fromCharCode(
+                                                  65 + optIndex,
+                                                )}
+                                                .
+                                              </span>
+                                              <span className="text-gray-800 break-words whitespace-normal flex-1 min-w-0">
+                                                {option}
+                                              </span>
+                                              <div className="flex items-center space-x-2 flex-shrink-0">
                                                 {isCorrectOption && (
                                                   <span className="text-green-600 text-sm font-medium">
                                                     ✓ Correct
