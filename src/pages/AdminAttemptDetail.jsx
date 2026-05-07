@@ -6,6 +6,8 @@ import NotAuthorized from './NotAuthorized';
 import Loader from '../components/Loader';
 import ImageZoomModal from '../components/ImageZoomModal';
 
+const ADMIN_STRING = import.meta.env.VITE_ADMIN_STRING;
+
 const AdminAttemptDetail = () => {
   const { attemptId } = useParams();
   const navigate = useNavigate();
@@ -34,7 +36,7 @@ const AdminAttemptDetail = () => {
     fetchAttempt();
   }, [attemptId]);
 
-  if (!user || user.role !== 'admin') {
+  if (!user || user.role !== ADMIN_STRING) {
     return <NotAuthorized />;
   }
 

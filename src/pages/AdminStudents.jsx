@@ -7,6 +7,8 @@ import NotAuthorized from './NotAuthorized';
 import Loader from '../components/Loader';
 import Avatar from '../components/Avatar';
 
+const ADMIN_STRING = import.meta.env.VITE_ADMIN_STRING;
+
 const AdminStudents = () => {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -43,7 +45,7 @@ const AdminStudents = () => {
     fetchStudents();
   }, []);
 
-  if (!user || user.role !== 'admin') {
+  if (!user || user.role !== ADMIN_STRING) {
     return <NotAuthorized />;
   }
 

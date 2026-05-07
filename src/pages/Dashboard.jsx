@@ -7,6 +7,8 @@ import Loader from '../components/Loader';
 import StudyStreak from '../components/StudyStreak';
 import EmptyState from '../components/EmptyState';
 
+const ADMIN_STRING = import.meta.env.VITE_ADMIN_STRING;
+
 const Dashboard = () => {
   const { user, logout, getSessionTimeRemaining, loading } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -88,7 +90,7 @@ const Dashboard = () => {
       </header>
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        {user.role === "admin" ? (
+        {user.role === ADMIN_STRING ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="bg-white p-6 rounded-lg shadow card-hover">
               <FaPlus className="text-3xl text-indigo-600 mb-4" />

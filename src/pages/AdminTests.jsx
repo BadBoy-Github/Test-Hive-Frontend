@@ -23,6 +23,8 @@ import { CSS } from '@dnd-kit/utilities';
 import API from '../utils/api';
 import { useModal } from '../components/Modal';
 
+const ADMIN_STRING = import.meta.env.VITE_ADMIN_STRING;
+
 const SortableQuestion = ({ question, onEdit, onDelete, isDeleting }) => {
   const {
     attributes,
@@ -152,7 +154,7 @@ const AdminTests = () => {
     fetchTests();
   }, []);
 
-  if (!user || user.role !== 'admin') {
+  if (!user || user.role !== ADMIN_STRING) {
     return <NotAuthorized />;
    }
 

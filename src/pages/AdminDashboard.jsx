@@ -6,6 +6,8 @@ import { useModal } from '../components/Modal';
 import { AuthContext } from '../context/AuthContext';
 import NotAuthorized from './NotAuthorized';
 
+const ADMIN_STRING = import.meta.env.VITE_ADMIN_STRING;
+
 const AdminDashboard = () => {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -35,7 +37,7 @@ const AdminDashboard = () => {
     });
   };
 
-  if (!user || user.role !== 'admin') {
+  if (!user || user.role !== ADMIN_STRING) {
     return <NotAuthorized />;
   }
 

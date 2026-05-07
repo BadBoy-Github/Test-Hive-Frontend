@@ -5,6 +5,8 @@ import API from '../utils/api';
 import NotAuthorized from './NotAuthorized';
 import Loader from '../components/Loader';
 
+const ADMIN_STRING = import.meta.env.VITE_ADMIN_STRING;
+
 const AdminTestResults = () => {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -17,13 +19,13 @@ const AdminTestResults = () => {
     document.title = 'Test Hive | Test Results';
   }, []);
 
-  useEffect(() => {
-    if (user && user.role === 'admin') {
-      fetchTests();
-    } else {
-      setLoading(false);
-    }
-  }, [user]);
+   useEffect(() => {
+     if (user && user.role === ADMIN_STRING) {
+       fetchTests();
+     } else {
+       setLoading(false);
+     }
+   }, [user]);
 
   const fetchTests = async () => {
     try {
@@ -45,7 +47,7 @@ const AdminTestResults = () => {
     }
   };
 
-  if (!user || user.role !== 'admin') {
+  if (!user || user.role !== ADMIN_STRING) {
     return <NotAuthorized />;
   }
 

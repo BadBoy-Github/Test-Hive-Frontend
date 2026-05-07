@@ -5,6 +5,8 @@ import { AuthContext } from '../context/AuthContext';
 import NotAuthorized from './NotAuthorized';
 import Loader from '../components/Loader';
 
+const ADMIN_STRING = import.meta.env.VITE_ADMIN_STRING;
+
 const AdminAnalytics = () => {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -31,7 +33,7 @@ const AdminAnalytics = () => {
     fetchAnalytics();
   }, []);
 
-  if (!user || user.role !== 'admin') {
+  if (!user || user.role !== ADMIN_STRING) {
     return <NotAuthorized />;
   }
 
