@@ -4,6 +4,7 @@ import API from '../utils/api';
 import { AuthContext } from '../context/AuthContext';
 import NotAuthorized from './NotAuthorized';
 import Loader from '../components/Loader';
+import { FaClock } from 'react-icons/fa';
 
 const ADMIN_STRING = import.meta.env.VITE_ADMIN_STRING;
 
@@ -110,52 +111,67 @@ const AdminAnalytics = () => {
           </Link>
         </div>
 
-        {/* Top Students */}
-        <div className="bg-white p-6 rounded-lg shadow mb-6">
-          <h3 className="text-xl font-semibold text-gray-900 mb-4">
-            Top 3 Students by Average Score
-          </h3>
-          {analytics.topStudents.length > 0 ? (
-            <div className="space-y-4">
-              {analytics.topStudents.map((student, index) => (
-                <div
-                  key={student._id}
-                  className="flex items-center justify-between p-4 bg-gray-50 rounded"
-                >
-                  <div className="flex items-center space-x-4">
-                    <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold ${
-                        index === 0
-                          ? "bg-yellow-500"
-                          : index === 1
-                            ? "bg-gray-400"
-                            : "bg-orange-500"
-                      }`}
-                    >
-                      {index + 1}
-                    </div>
-                    <div>
-                      <p className="font-semibold text-gray-900">
-                        {student.name}
-                      </p>
-                      <p className="text-sm text-gray-600">{student.email}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-bold text-indigo-600">
-                      {student.averageScore.toFixed(1)}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {student.totalAttempts} attempts
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-gray-500">No student data available.</p>
-          )}
-        </div>
+         {/* Top Students */}
+         <div className="bg-white p-6 rounded-lg shadow mb-6">
+           <h3 className="text-xl font-semibold text-gray-900 mb-4">
+             Top 3 Students by Average Score
+           </h3>
+           {analytics.topStudents.length > 0 ? (
+             <div className="space-y-4">
+               {analytics.topStudents.map((student, index) => {
+                 // Format best time
+                 const formatTime = (seconds) => {
+                   if (seconds == null || seconds === 0) return 'No time data';
+                   const mins = Math.floor(seconds / 60);
+                   const secs = Math.floor(seconds % 60);
+                   return `${mins}:${secs.toString().padStart(2, '0')}`;
+                 };
+                 return (
+                   <div
+                     key={student._id}
+                     className="flex items-center justify-between p-4 bg-gray-50 rounded"
+                   >
+                     <div className="flex items-center space-x-4">
+                       <div
+                         className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold ${
+                           index === 0
+                             ? "bg-yellow-500"
+                             : index === 1
+                               ? "bg-gray-400"
+                               : "bg-orange-500"
+                         }`}
+                       >
+                         {index + 1}
+                       </div>
+                       <div>
+                         <p className="font-semibold text-gray-900">
+                           {student.name}
+                         </p>
+                         <p className="text-sm text-gray-600">{student.email}</p>
+                       </div>
+                     </div>
+                     <div className="text-right">
+                       <p className="text-2xl font-bold text-indigo-600">
+                         {student.averageScore.toFixed(1)}
+                       </p>
+                       <p className="text-sm text-gray-500">
+                         {student.totalAttempts} attempt{student.totalAttempts !== 1 ? 's' : ''}
+                         {student.bestTime != null && (
+                           <span className="ml-2 flex items-center justify-end text-gray-400">
+                             <FaClock className="inline mr-1" />
+                             {formatTime(student.bestTime)}
+                           </span>
+                         )}
+                       </p>
+                     </div>
+                   </div>
+                 );
+               })}
+             </div>
+           ) : (
+             <p className="text-gray-500">No student data available.</p>
+           )}
+         </div>
       </main>
     </div>
   );

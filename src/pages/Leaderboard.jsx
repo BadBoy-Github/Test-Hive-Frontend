@@ -5,7 +5,7 @@ import API from '../utils/api';
 import Loader from '../components/Loader';
 import Avatar from '../components/Avatar';
 import EmptyState from '../components/EmptyState';
-import { FaTrophy, FaMedal, FaAward, FaFilter, FaGlobeAmericas, FaLock } from 'react-icons/fa';
+import { FaTrophy, FaMedal, FaAward, FaFilter, FaGlobeAmericas, FaLock, FaClock } from 'react-icons/fa';
 
 const Leaderboard = () => {
   const { user } = useContext(AuthContext);
@@ -112,75 +112,91 @@ const Leaderboard = () => {
         ) : (
           <div className="bg-white rounded-lg shadow overflow-hidden">
             <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Rank
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Student
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Score
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Tests Taken
-                  </th>
-                </tr>
-              </thead>
+               <thead className="bg-gray-50">
+                 <tr>
+                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                     Rank
+                   </th>
+                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                     Student
+                   </th>
+                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                     Score
+                   </th>
+                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                     Tests Taken
+                   </th>
+                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                     Best Time
+                   </th>
+                 </tr>
+               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {leaderboard.map((entry, index) => {
-                  const rank = index + 1;
-                  const isCurrentUser = entry.userId?._id === user._id;
-                  return (
-                    <tr
-                      key={entry.userId?._id || index}
-                      className={`${isCurrentUser ? "bg-indigo-50" : ""} hover:bg-gray-50 transition-colors`}
-                    >
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center justify-center w-10 h-10">
-                          {getRankIcon(rank)}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center space-x-3">
-                          <Avatar
-                            name={entry.userId?.name || "Anonymous"}
-                            size="sm"
-                          />
-                          <div>
-                            <div
-                              className={`font-medium ${isCurrentUser ? "text-indigo-700" : "text-gray-900"}`}
-                            >
-                              {entry.userId?.name || "Anonymous"}
-                            </div>
-                            {isCurrentUser && (
-                              <span className="text-xs text-indigo-600">
-                                (You)
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`font-bold text-lg ${
-                            entry.averageScore >= 80
-                              ? "text-green-600"
-                              : entry.averageScore >= 50
-                                ? "text-yellow-600"
-                                : "text-red-600"
-                          }`}
-                        >
-                          {Math.round(entry.averageScore)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-600">
-                        {entry.testsTaken}
-                      </td>
-                    </tr>
-                  );
-                })}
+                 {leaderboard.map((entry, index) => {
+                   const rank = index + 1;
+                   const isCurrentUser = entry.userId?._id === user._id;
+                   // Format bestTime (seconds) to mm:ss
+                   const formatTime = (seconds) => {
+                     if (seconds == null || seconds === 0) return '—';
+                     const mins = Math.floor(seconds / 60);
+                     const secs = Math.floor(seconds % 60);
+                     return `${mins}:${secs.toString().padStart(2, '0')}`;
+                   };
+                   return (
+                     <tr
+                       key={entry.userId?._id || index}
+                       className={`${isCurrentUser ? "bg-indigo-50" : ""} hover:bg-gray-50 transition-colors`}
+                     >
+                       <td className="px-6 py-4 whitespace-nowrap">
+                         <div className="flex items-center justify-center w-10 h-10">
+                           {getRankIcon(rank)}
+                         </div>
+                       </td>
+                       <td className="px-6 py-4 whitespace-nowrap">
+                         <div className="flex items-center space-x-3">
+                           <Avatar
+                             name={entry.userId?.name || "Anonymous"}
+                             size="sm"
+                           />
+                           <div>
+                             <div
+                               className={`font-medium ${isCurrentUser ? "text-indigo-700" : "text-gray-900"}`}
+                             >
+                               {entry.userId?.name || "Anonymous"}
+                             </div>
+                             {isCurrentUser && (
+                               <span className="text-xs text-indigo-600">
+                                 (You)
+                               </span>
+                             )}
+                           </div>
+                         </div>
+                       </td>
+                       <td className="px-6 py-4 whitespace-nowrap">
+                         <span
+                           className={`font-bold text-lg ${
+                             entry.averageScore >= 80
+                               ? "text-green-600"
+                               : entry.averageScore >= 50
+                                 ? "text-yellow-600"
+                                 : "text-red-600"
+                           }`}
+                         >
+                           {Math.round(entry.averageScore)}
+                         </span>
+                       </td>
+                       <td className="px-6 py-4 whitespace-nowrap text-gray-600">
+                         {entry.testsTaken}
+                       </td>
+                       <td className="px-6 py-4 whitespace-nowrap text-gray-600">
+                         <span className="flex items-center">
+                           <FaClock className="mr-1 text-gray-400" />
+                           {formatTime(entry.bestTime)}
+                         </span>
+                       </td>
+                     </tr>
+                   );
+                 })}
               </tbody>
             </table>
           </div>
