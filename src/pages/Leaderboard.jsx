@@ -5,7 +5,7 @@ import API from '../utils/api';
 import Loader from '../components/Loader';
 import Avatar from '../components/Avatar';
 import EmptyState from '../components/EmptyState';
-import { FaTrophy, FaMedal, FaAward, FaFilter, FaGlobeAmericas, FaLock, FaClock } from 'react-icons/fa';
+import { FaTrophy, FaMedal, FaAward, FaClock } from 'react-icons/fa';
 
 const Leaderboard = () => {
   const { user } = useContext(AuthContext);
@@ -14,7 +14,6 @@ const Leaderboard = () => {
   const [loading, setLoading] = useState(true);
   const [selectedTest, setSelectedTest] = useState('all');
   const [tests, setTests] = useState([]);
-  const [isPublic, setIsPublic] = useState(true);
 
   useEffect(() => {
     document.title = 'Test Hive | Leaderboard';
@@ -69,36 +68,20 @@ const Leaderboard = () => {
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="mb-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <select
-              value={selectedTest}
-              onChange={(e) => setSelectedTest(e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="all">All Tests</option>
-              {tests.map((test) => (
-                <option key={test._id} value={test._id}>
-                  {test.title}
-                </option>
-              ))}
-            </select>
-
-            <button
-              onClick={() => setIsPublic(!isPublic)}
-              className={`flex items-center px-3 py-2 rounded-md text-sm ${
-                isPublic
-                  ? "bg-green-100 text-green-800"
-                  : "bg-gray-100 text-gray-800"
-              }`}
-            >
-              {isPublic ? (
-                <FaGlobeAmericas className="mr-1" />
-              ) : (
-                <FaLock className="mr-1" />
-              )}
-              {isPublic ? "Public" : "Private"}
-            </button>
-          </div>
+        <div className="flex items-center space-x-4">
+          <select
+            value={selectedTest}
+            onChange={(e) => setSelectedTest(e.target.value)}
+            className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            <option value="all">All Tests</option>
+            {tests.map((test) => (
+              <option key={test._id} value={test._id}>
+                {test.title}
+              </option>
+            ))}
+          </select>
+        </div>
         </div>
 
         {loading ? (

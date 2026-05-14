@@ -155,6 +155,20 @@ const Dashboard = () => {
                 View
               </button>
             </div>
+
+            <div className="bg-white p-6 rounded-lg shadow card-hover">
+              <FaTrophy className="text-3xl text-yellow-600 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900">
+                Leadership
+              </h3>
+              <p className="text-gray-500">View leaderboards and rankings</p>
+              <button
+                onClick={() => navigate("/leaderboard")}
+                className="mt-4 btn-gradient-primary"
+              >
+                View
+              </button>
+            </div>
           </div>
         ) : (
           <div>
