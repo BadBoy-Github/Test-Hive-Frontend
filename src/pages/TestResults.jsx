@@ -15,34 +15,38 @@ const TestResults = () => {
       const res = await API.get('/attempts/results');
 
       // Group results by test and create summaries
-        const testMap = {};
-        res.data.forEach(result => {
-          const testId = result.testId._id;
-          if (!testMap[testId]) {
-            testMap[testId] = {
-              testId: testId,
-              testName: result.testId.title,
-              totalMarks: result.testId.totalMarks,
-              attempts: [],
-              bestScore: 0,
-              latestAttemptDate: null
-            };
-          }
+      const testMap = {};
+      res.data.forEach(result => {
+        const testId = result.testId._id;
+        if (!testMap[testId]) {
+          testMap[testId] = {
+            testId: testId,
+            testName: result.testId.title,
+            totalMarks: result.testId.totalMarks,
+            createdAt: result.testId.createdAt, // store test creation date for sorting
+            attempts: [],
+            bestScore: 0,
+            latestAttemptDate: null
+          };
+        }
 
-          testMap[testId].attempts.push(result);
-          testMap[testId].bestScore = Math.max(testMap[testId].bestScore, result.score);
+        testMap[testId].attempts.push(result);
+        testMap[testId].bestScore = Math.max(testMap[testId].bestScore, result.score);
 
-          const attemptDate = new Date(result.endTime);
-          if (!testMap[testId].latestAttemptDate || attemptDate > testMap[testId].latestAttemptDate) {
-            testMap[testId].latestAttemptDate = attemptDate;
-          }
-        });
+        const attemptDate = new Date(result.endTime);
+        if (!testMap[testId].latestAttemptDate || attemptDate > testMap[testId].latestAttemptDate) {
+          testMap[testId].latestAttemptDate = attemptDate;
+        }
+      });
 
-      const summaries = Object.values(testMap).map(summary => ({
-        ...summary,
-        latestAttemptDate: summary.latestAttemptDate.toLocaleDateString(),
-        attemptsCount: summary.attempts.length
-      }));
+      // Convert to array and sort by test creation date DESC (newest first)
+      const summaries = Object.values(testMap)
+        .map(summary => ({
+          ...summary,
+          latestAttemptDate: summary.latestAttemptDate.toLocaleDateString(),
+          attemptsCount: summary.attempts.length
+        }))
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
       setTestSummaries(summaries);
     } catch (err) {
